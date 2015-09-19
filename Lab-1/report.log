@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.1.28)  18 SEP 2015 21:52
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.1.28)  19 SEP 2015 12:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -399,102 +399,78 @@ LaTeX Info: Redefining \nameref on input line 8.
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+<traffic-light-circuit.pdf, id=97, 508.7808pt x 282.57568pt>
+File: traffic-light-circuit.pdf Graphic file (type pdf)
 
-LaTeX Warning: File `traffic-light-circuit.pdf' not found on input line 43.
+<use traffic-light-circuit.pdf>
+Package pdftex.def Info: traffic-light-circuit.pdf used on input line 43.
+(pdftex.def)             Requested size: 281.85587pt x 156.55109pt.
 
+<traffic-light-flowchart.pdf, id=100, 249.5724pt x 364.48169pt>
+File: traffic-light-flowchart.pdf Graphic file (type pdf)
 
-! Package pdftex.def Error: File `traffic-light-circuit.pdf' not found.
+<use traffic-light-flowchart.pdf>
+Package pdftex.def Info: traffic-light-flowchart.pdf used on input line 52.
+(pdftex.def)             Requested size: 140.92793pt x 205.8213pt.
 
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.43 ...h=.7\textwidth]{traffic-light-circuit.pdf}
-                                                  
-? 
-Package microtype Info: Loading generic settings for font family
-(microtype)             `cmtt' (encoding: OT1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
+<jeopardy-circuit.pdf, id=103, 493.36319pt x 248.8497pt>
+File: jeopardy-circuit.pdf Graphic file (type pdf)
 
-LaTeX Warning: File `traffic-light-flowchart.pdf' not found on input line 52.
+<use jeopardy-circuit.pdf>
+Package pdftex.def Info: jeopardy-circuit.pdf used on input line 65.
+(pdftex.def)             Requested size: 328.82707pt x 165.86267pt.
 
-
-! Package pdftex.def Error: File `traffic-light-flowchart.pdf' not found.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.52 ....7\textwidth]{traffic-light-flowchart.pdf}
-                                                  
-? 
-[2]
-
-LaTeX Warning: File `jeopardy-circuit.pdf' not found on input line 65.
-
-
-! Package pdftex.def Error: File `jeopardy-circuit.pdf' not found.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.65 ...width=0.7\textwidth]{jeopardy-circuit.pdf}
-                                                  
-? 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
+[2 <./traffic-light-circuit.pdf>]
+<jeopardy-flowchart.pdf, id=126, 522.27121pt x 456.02371pt>
+File: jeopardy-flowchart.pdf Graphic file (type pdf)
 
-LaTeX Warning: File `jeopardy-flowchart.pdf' not found on input line 87.
-
-
-! Package pdftex.def Error: File `jeopardy-flowchart.pdf' not found.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.87 ...dth=0.7\textwidth]{jeopardy-flowchart.pdf}
-                                                  
-? 
-[3]
+<use jeopardy-flowchart.pdf>
+Package pdftex.def Info: jeopardy-flowchart.pdf used on input line 87.
+(pdftex.def)             Requested size: 328.82707pt x 287.1225pt.
+ [3 <./traffic-light-flowchart.pdf> <./jeopardy-circuit.pdf>]
 
 LaTeX Warning: Reference `jeopardy-screenshot' on page 4 undefined on input lin
 e 119.
 
-<traffic-light.jpg, id=121, 3276.24pt x 2457.18pt>
+<traffic-light.jpg, id=160, 3276.24pt x 2457.18pt>
 File: traffic-light.jpg Graphic file (type jpg)
  <use traffic-light.jpg>
 Package pdftex.def Info: traffic-light.jpg used on input line 123.
 (pdftex.def)             Requested size: 281.85587pt x 211.38835pt.
 
-<jeopardy-board.jpg, id=122, 3276.24pt x 2457.18pt>
+<jeopardy-board.jpg, id=161, 3276.24pt x 2457.18pt>
 File: jeopardy-board.jpg Graphic file (type jpg)
  <use jeopardy-board.jpg>
 Package pdftex.def Info: jeopardy-board.jpg used on input line 130.
 (pdftex.def)             Requested size: 281.85587pt x 211.38835pt.
 
-<jeopardy-screenshot.jpg, id=123, 591.20876pt x 423.5825pt>
+<jeopardy-screenshot.jpg, id=162, 591.20876pt x 423.5825pt>
 File: jeopardy-screenshot.jpg Graphic file (type jpg)
 
 <use jeopardy-screenshot.jpg>
 Package pdftex.def Info: jeopardy-screenshot.jpg used on input line 137.
 (pdftex.def)             Requested size: 352.31625pt x 252.42575pt.
- [4] [5] [6 <./traffic-light.jpg> <./jeopardy-board.jpg>] [7 <./jeopardy-screen
-shot.jpg>]
+ [4 <./jeopardy-flowchart.pdf>] [5 <./traffic-light.jpg> <./jeopardy-board.jpg>
+] [6 <./jeopardy-screenshot.jpg>]
+Package microtype Info: Loading generic settings for font family
+(microtype)             `cmtt' (encoding: OT1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
 File: Traffic-Controller.bs2  (verbatim)
- [8
+ [7
 
 ]
 File: Jeopardy.bs2  (verbatim)
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 178.
- [9
+ [8
 
 ]
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 178.
- (./report.aux)
+
+(./report.aux)
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 178.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 178.
 Package rerunfilecheck Info: File `report.out' has not changed.
@@ -506,13 +482,13 @@ LaTeX Warning: There were undefined references.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 178.
  ) 
 Here is how much of TeX's memory you used:
- 7704 strings out of 493304
- 116271 string characters out of 6139871
+ 7717 strings out of 493304
+ 116688 string characters out of 6139871
  247545 words of memory out of 5000000
- 11011 multiletter control sequences out of 15000+600000
- 11527 words of font info for 59 fonts, out of 8000000 for 9000
+ 11025 multiletter control sequences out of 15000+600000
+ 11359 words of font info for 58 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
- 30i,6n,35p,532b,342s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 30i,6n,35p,532b,340s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texl
@@ -521,10 +497,10 @@ mf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist
 /fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/
 type1/public/amsfonts/cm/cmtt10.pfb></usr/share/texlive/texmf-dist/fonts/type1/
 public/amsfonts/cm/cmtt9.pfb>
-Output written on report.pdf (9 pages, 3317350 bytes).
+Output written on report.pdf (8 pages, 7342307 bytes).
 PDF statistics:
- 191 PDF objects out of 1000 (max. 8388607)
- 167 compressed objects within 2 object streams
- 34 named destinations out of 1000 (max. 500000)
- 13456 words of extra memory for PDF output out of 14400 (max. 10000000)
+ 239 PDF objects out of 1000 (max. 8388607)
+ 180 compressed objects within 2 object streams
+ 33 named destinations out of 1000 (max. 500000)
+ 12964 words of extra memory for PDF output out of 14400 (max. 10000000)
 
