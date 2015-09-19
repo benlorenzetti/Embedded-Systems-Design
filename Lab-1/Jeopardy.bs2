@@ -1,0 +1,56 @@
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+' Jeopardy.bs2 
+' Declare Mapping for I/O Signals
+
+BUZZER_1 CON $0001
+BUZZER_2 CON $4000
+P1_LED CON $0008
+P2_LED CON $2000
+GO_LED CON $0100
+
+' Set I/O Directions (Only Set Outputs, default 0=input)
+DIRS = (P1_LED | P2_LED | GO_LED)
+' Set Output Initial Values (HIGH is off)
+OUTS = (P1_LED | P2_LED | GO_LED)
+
+' Declare Constants
+CYCLE_PERIOD CON 1
+' Note: CYCLE_PERIOD should be << 268 ms (average human reaction time)
+
+' Declare Variables
+react_cycles VAR Word
+react_time VAR Word
+winner VAR Bit
+
+' Run Main Game Loop Forever
+DO
+  ' Blink All LEDs to Indicate Game Started
+  OUTS = OUTS & (~(P1_LED | P2_LED | GO_LED))
+  PAUSE 500
+  OUTS = OUTS | (P1_LED | P2_LED | GO_LED)
+  ' Random Wait Time--Use Prior Results as Seed
+  RANDOM react_time
+  PAUSE (react_time/10)
+  ' Go - Count Cycles Until a Buzzer is Pressed
+  react_cycles = 0
+  OUTS = OUTS & (~(GO_LED))
+  DO
+    winner = 0
+    IF (0 = (INS & BUZZER_1)) THEN Break
+    winner = 1
+    IF (0 = (INS & BUZZER_2)) THEN Break
+    react_cycles = react_cycles + 1
+  LOOP
+  Break:
+  ' Indicate the Winner by LED and turn off GO_LED
+  OUTS = OUTS & (~ (P1_LED * (1 & (~winner))))
+  OUTS = OUTS & (~ (P2_LED * (1 & winner)))
+  OUTS = OUTS | (GO_LED)
+  ' Calculate Reaction Time and Display Results
+  react_time = react_cycles / CYCLE_PERIOD
+  DEBUG "Player number ", DEC (winner + 1), " wins!", CR
+  DEBUG "Reaction_time = ", DEC react_time, " ms.", CR
+  ' Pause, then continue to the next game
+  PAUSE 2000
+LOOP

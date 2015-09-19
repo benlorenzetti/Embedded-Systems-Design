@@ -1,0 +1,29 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage[colorlinks=false, pdfborder={0 0 0}]{hyperref}
+\begin{document}
+\title{Traffic Light Controller \& Jeopardy Game\\Embedded System Design, Lab 1}
+\date{September 17, 2015}
+\author{Ben Lorenzetti}
+\maketitle
+\tableofcontents
+
+\section{Objectives and Problem Description}
+
+The objectives of this lab were to learn the basics of the Stamp 2 board, setup the programming+debugging toolchain, and complete two projects with the simplest actuators available: LEDs and pushbutton switches.
+
+\subsection{Traffic Light Controller}
+
+The first project is the traffic light controller, which models two traffic lights at an intersection between a major and minor road. There are 6 LEDs--2 red, 2 yellow, 2 green--and a pushbutton switch representing a magnetic presence sensor on the minor road. The major road should always remain green unless the minor road pushbutton is triggered. This trigger causes a transistion following normal traffic signals, with 5 second delays between each signal permutation and 10 seconds green duration on the minor road.
+
+\subsection{Jeopardy Style Game}
+
+The second project has two pushbutton representing Jeopardy buzzers and some indicator LEDs.
+When the go LED turns on, two players compete to buzz in the quickest.
+The winner is displayed via LEDs and the winning player's reaction time is printed to the debug terminal.
+To make the game more difficult and competitive, the go LED is delayed by a random amount of time.
+
+\section{Procedure}
+\end{document}
