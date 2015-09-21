@@ -4,15 +4,15 @@
 \contentsline {section}{\numberline {2}Procedure}{2}{section.2}
 \contentsline {subsection}{\numberline {2.1}Assignment: Ch. 4 Servo Motor}{2}{subsection.2.1}
 \contentsline {subsection}{\numberline {2.2}Assignment: Ch.5 Potentiometers}{3}{subsection.2.2}
-\contentsline {subsection}{\numberline {2.3}Traffic Light Controller}{4}{subsection.2.3}
-\contentsline {subsection}{\numberline {2.4}Jeopardy Style Game}{4}{subsection.2.4}
-\contentsline {section}{\numberline {3}Expected Results}{5}{section.3}
-\contentsline {section}{\numberline {4}Experiment and Design Revisions}{5}{section.4}
-\contentsline {subsection}{\numberline {4.1}Traffic Light Controller}{5}{subsection.4.1}
-\contentsline {subsection}{\numberline {4.2}Jeopardy Game}{5}{subsection.4.2}
+\contentsline {subsection}{\numberline {2.3}Rudder Controller}{4}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Wiper Controller}{4}{subsection.2.4}
+\contentsline {section}{\numberline {3}Expected Results}{4}{section.3}
+\contentsline {section}{\numberline {4}Experiment and Design Revisions}{4}{section.4}
+\contentsline {subsection}{\numberline {4.1}Rudder Controller}{4}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Wiper Controller}{6}{subsection.4.2}
 \contentsline {section}{\numberline {5}Observations}{6}{section.5}
-\contentsline {section}{\numberline {6}Discussion}{7}{section.6}
-\contentsline {section}{\numberline {7}Exercises}{7}{section.7}
-\contentsline {section}{\numberline {8}Programs}{10}{section.8}
-\contentsline {subsection}{\numberline {8.1}Traffic Light Controller}{10}{subsection.8.1}
-\contentsline {subsection}{\numberline {8.2}Jeopardy Style Game}{11}{subsection.8.2}
+\contentsline {section}{\numberline {6}Discussion}{6}{section.6}
+\contentsline {section}{\numberline {7}Exercises}{6}{section.7}
+\contentsline {section}{\numberline {8}Programs}{8}{section.8}
+\contentsline {subsection}{\numberline {8.1}Rudder Controller}{8}{subsection.8.1}
+\contentsline {subsection}{\numberline {8.2}Wiper Controller}{9}{subsection.8.2}

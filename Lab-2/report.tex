@@ -58,7 +58,7 @@ and the width of the high pulse carries angular displacement information.
 The formula relating pulse width and angular displacement is
 \begin{equation}
 t_{p-width}(\theta)=\left\{\begin{array}{c c}
-\frac{250\mu s}{45^{o}}\theta+250\mu s	&	10^{o}<\theta<170^{o}\\
+\frac{500\mu s}{45^{o}}\theta+500\mu s	&	10^{o}<\theta<170^{o}\\
 0\mu s	&	\textrm{servo off}	\\
 \end{array}\right.
 \label{pulse-width-eq}
@@ -76,7 +76,7 @@ be approximately.
 To avoid dealing with PBASICs strange limitations,
 we can rewrite equation \ref{pulse-width-eq} as
 \begin{equation}
-\textrm{duration}=\frac{25}{9}*\theta+125, \quad 10^{o}<\theta<170^{o}
+\textrm{duration}=\frac{50}{9}*\theta+250, \quad 10^{o}<\theta<170^{o}
 \end{equation}
 
 Chapter 4 also provided two more expressions in PBASIC that are helpful with servo motors:
@@ -153,81 +153,51 @@ V_{LOW}=V_{HIGH}e^{\nicefrac{-t_{discharge}}{\tau}}
 \begin{equation*}
 t_{discharge}=\tau*ln\left(\frac{V_{HIGH}}{V_{LOW}}\right)
 \end{equation*}
-For $V_{HIGH}=5V$, $V_{LOW}=1.4V$, $C=3,300\mu F$, this evaluates to
+For $V_{HIGH}=5V$, $V_{LOW}=1.4V$, $C=0.1\mu F$, this evaluates to
 \begin{equation}
-t_{discharge}=\left[\frac{2.1}{10^{3}}*\frac{2\mu s}{\Omega}\right]*(R_{2}+R_{pot})
+t_{discharge}=\left[\frac{6.365}{10^{2}}*\frac{2\mu s}{\Omega}\right]*(R_{2}+R_{pot})
 \label{t-discharge-eq}
 \end{equation}
 
-A $10k\Omega$ potentiometer with $R_{2}=220\Omega$, leads to input
-domain $220\Omega<R_{2}+R_{pot}<10.22k\Omega$ and output range
-$0.462*2\mu s<t_{discharge}<21.462*2\mu s$. When we consider
+A $10k\Omega$ potentiometer with $R_{2}=10k\Omega$, leads to input
+domain $10k\Omega<R_{2}+R_{pot}<20k\Omega$ and output range
+$636.48*2\mu s<t_{discharge}<1272.97*2\mu s$. When we consider
 that the PBASIC Stamp board only has an integer resolution of
 $2 \mu s$, then the expected result from a call to
 \mbox{\texttt{RCTIME, pin, 1, duration}} is in the set
 \begin{equation}
-\textrm{\texttt{duration}}=\{1, 2, 3,..., 21, 22\}
+\textrm{\texttt{duration}}=\{637, 638, 639,...1272, 1273\}
 \end{equation}
-when the 10 k$\Omega$ potentiometer is used with a 3,300 $\mu F$ capacitor.
+when the 10 k$\Omega$ potentiometer is used with a 0.1 $\mu F$ capacitor.
 
-\subsection{Traffic Light Controller}
+Actual testing showed an experimental range of
+\begin{equation}
+\textrm{\texttt{duration}}=\{619, 620, 621,...1288, 1289\}
+\end{equation}
 
-The lab said to go through the first 3 chapters of the book and do the activities, so I did this.
-
-I built the circuit shown in \hyperref[traffic-light-circuit]{figure \ref{traffic-light-circuit}} on the Basic Stamp breadboard.
-It has the 6 LEDs in active low configuration with $1k\Omega$ current limiting resistors.
-The pushbutton switch was also configured active low for consistency.
-It also has a $1k\Omega$ current limiting resistor.
+\subsection{Rudder Controller}
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=.6\textwidth]{traffic-light-circuit.pdf}
-\caption{Traffic Light Controller Circuit Diagram}
-\label{traffic-light-circuit}
+\includegraphics[width=.7\textwidth]{rudder-circuit.pdf}
+\caption{Rudder Controller and Wiper Controller Circuit}
+\label{rudder-circuit}
 \end{figure}
-
-The control flow chart for the PBasic program is shown in \hyperref[traffic-light-flowchart]{figure \ref{traffic-light-flowchart}}.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.3\textwidth]{traffic-light-flowchart.pdf}
-\caption{Traffic Light Controller Flowchart}
-\label{traffic-light-flowchart}
+\includegraphics[width=0.5\textwidth]{rudder-flowchart.pdf}
+\caption{Rudder Controller Implementation Flowchart}
+\label{rudder-flowchart}
 \end{figure}
 
-\subsection{Jeopardy Style Game}
-
-I designed the circuit for the Jeopardy game similarly to the traffic light controller.
-Each LED or pushbutton switch has a $1k\Omega$ current limiting resistor and is configured active low.
-The circuit diagram for the Jeopardy game is shown in \hyperref[jeopardy-circuit]{figure \ref{jeopardy-circuit}}.
-
-\begin{figure}[h!]
-\centering
-\includegraphics[width=0.7\textwidth]{jeopardy-circuit.pdf}
-\caption{Jeopardy Circuit Diagram}
-\label{jeopardy-circuit}
-\end{figure}
-
-The jeopardy game was more complicated than the traffic light controller,
-but only from a software perspective--not hardware.
-
-I used the random function to generate a random delay time before the game begins,
-passing in the previous game's reaction time as a seed value so that the same
-pseudorandom sequence is not repeated every game.
-
-Once the game begins the microcontroller executes a tight loop that does checks the pushbuttons
-for a victor and then increments a react\_cycles variable.
-When the first player buzzes in, the appropriate LED lights up and their reaction
-time is calculated from the number of cycles and the closest integer to the loop iteration time.
-This value is printed to the debug terminal.
-
-The control flow chart for the PBasic program is shown in \hyperref[jeopardy-flowchart]{figure \ref{jeopardy-flowchart}}.
+\subsection{Wiper Controller}
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.7\textwidth]{jeopardy-flowchart.pdf}
-\caption{Jeopardy-Like Game Flowchart}
-\label{jeopardy-flowchart}
+\includegraphics[width=0.5\textwidth]{wiper-flowchart.pdf}
+\caption{Wiper Controller Flowchart}
+\label{wiper-flowchart}
 \end{figure}
 
 \section{Expected Results}
@@ -236,61 +206,64 @@ I expected both circuits to behave according to the problem statements.
 
 \section{Experiment and Design Revisions}
 
-\subsection{Traffic Light Controller}
+\subsection{Rudder Controller}
 
-This circuit and code worked like a charm.
-No revisions had to be made, but I did restyle the code to look more like C with boolean algebra.
+When I first built this project's implementation, the controller worked
+for 90\% of the potentiometer's input range. However, when the discharge
+time was on the lower range of its possible values, the rudder would
+suddenly shift from near $45^{o}$ to the $135^{o}$ position.
+After adding a \texttt{DEBUG} statement, I saw the following transition
+occuring:
+\begin{verbatim}
+discharge_time = 622, pulse_width = 502
+discharge_time = 621, pulse_width = 501
+discharge_time = 620, pulse_width = 500
+discharge_time = 619, pulse_width = 500
+discharge_time = 618, pulse_width = 1000
+\end{verbatim}
 
-\subsection{Jeopardy Game}
+What was occuring was that the \texttt{discharge\_time} from the RC circuit
+was coming back slightly lower than the minimum value I was expecting.
+Thus the subraction \mbox{\texttt{(discharge\_time - MAPPING\_X1)}} resulted
+in a negative number, except the variable was not declared as signed so
+the result of the two's-complement arithmetic was the maximum possible
+value for the 16-bit Word. Later in the code is the function
+\mbox{\texttt{MAX 1000}}, so that is where the 1000 is coming from.
 
-I really did not want to have two sets of Debug statements, depending on the winner.
-However, using only one Debug statement and storing the winner in a bit variable proved more difficult than I anticipated.
+The fix for this bug was very simple, simply treating the
+\texttt{discharge\_time} variable with \mbox{\texttt{MIN MAPPING\_X1}}
+prior to calculating the \texttt{pulse\_width}.
 
-It was difficult to generate the boolean algebra statements for turning on the appropriate LEDs,
-mostly because PBasic sucks and doesn't even have a complete set of boolean operators.
+\subsection{Wiper Controller}
 
-So reducing to one set of Debut statements and only a single goto location proved more difficult,
-but I think it was worth the change for code brevity.
+When I first implemented this circuit the program worked but the servo
+was extremely jerky. At first I thought this meant my speeds were too
+high, but it turned out it was only due to a \texttt{DEBUG} statement
+in the loop that was throwing off the pulse width timing.
+
+Removal of the \texttt{DEBUG} statement fixed the error.
 
 \section{Observations}
 
-Both circuits worked as expected, and photos of the working boards are shown in
-\hyperref[traffic-light]{figure \ref{traffic-light}}
-and \hyperref[jeopardy-board]{figure \ref{jeopardy-board}}.
-A screenshot of the Debug terminal for the Jeopardy board is shown in figure \ref{jeopardy-screenshot}.
+Both circuits eventually worked as expected, and photos of the working boards are shown in
+\hyperref[rudder-controller]{figure \ref{rudder-controller}}
+and \hyperref[wiper-controller]{figure \ref{wiper-controller}}.
 
 \begin{figure}
 \centering
-\includegraphics[width=0.6\textwidth]{traffic-light.jpg}
-\caption{Traffic Light Controller Circuit}
-\label{traffic-light}
+\includegraphics[width=0.6\textwidth]{rudder-controller.jpg}
+\caption{Rudder Controller Board}
+\label{rudder-controller}
 \end{figure}
 
 \begin{figure}
 \centering
-\includegraphics[width=0.6\textwidth]{jeopardy-board.jpg}
-\caption{Jeopardy Game Circuit}
-\label{jeopardy-board}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[width=0.75\textwidth]{jeopardy-screenshot.jpg}
-\caption{Screenshot of Jeopardy Debug Terminal with Reaction Times}
-\label{jeopardy-debug}
+\includegraphics[width=0.6\textwidth]{wiper-controller.jpg}
+\caption{Wiper Controller Board}
+\label{wiper-controller}
 \end{figure}
 
 \section{Discussion}
-
-This lab really revealed a major flaw of the Stamp Basic board:
-the fact that running an interpreter prevents you from knowing exact timing.
-If we were writing code directly for PIC, we could no the clock rate and write some
-assembly inside the reaction time loop--and therby no the exact number of clock cycles
-and the clock rate.
-
-I have a low opinion of the Stamp Basic board right now, at least compared to other
-microcontrollers. This week I complain about not having control of clock cycles or there being
-a clock variable that is accessable. Next weeks' dissatisfaction preview: no ADC on board.
 
 \section{Exercises}
 
@@ -299,20 +272,20 @@ There were no exercises given.
 \clearpage
 \section{Programs}
 
-\subsection{Traffic Light Controller}
+\subsection{Rudder Controller}
 \begingroup
-\fontsize{10pt}{12pt}
+\fontsize{11pt}{13pt}
 
-\verbatiminput{Traffic-Controller.bs2}
+\verbatiminput{Rudder-Controller.bs2}
 
 \endgroup
 
 \clearpage
-\subsection{Jeopardy Style Game}
+\subsection{Wiper Controller}
 \begingroup
-\fontsize{9pt}{11pt}
+\fontsize{9pt}{10pt}
 
-\verbatiminput{Jeopardy.bs2}
+\verbatiminput{Wiper-Controller.bs2}
 
 \endgroup
 

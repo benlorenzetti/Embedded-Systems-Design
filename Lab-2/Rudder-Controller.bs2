@@ -1,0 +1,41 @@
+' Rudder-Controller.bs2
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+POT_PIN CON 0
+SERVO_PIN CON 15
+CHARGE_STATE CON 1
+CHARGE_TIME CON 1
+MAPPING_M CON 191
+MAPPING_X1 CON 619
+MAPPING_Y1 CON 500
+
+discharge_time VAR Word
+pulse_width VAR Word
+
+DO
+  ' Set POT_PIN to output the charging voltage and wait CHARGE_TIME
+  DIRS = DIRS | (1 << POT_PIN)
+  ' If CHARGE_STATE is high, set OUTS Pot. bit to high
+  OUTS = OUTS | (CHARGE_STATE * (1 << POT_PIN))
+  ' If CHARGE_STATE is low, set OUTS Pot. bit to low
+  OUTS = OUTS & (~ ( (CHARGE_STATE ^ 1) * (1 << POT_PIN)))
+  PAUSE CHARGE_TIME
+
+  ' Discharge the capacitor through the Potentionmeter and record time
+  RCTIME POT_PIN, CHARGE_STATE, discharge_time
+
+  ' Map the discharge_time input to pulse_width output
+  discharge_time = discharge_time MIN MAPPING_X1
+  pulse_width = MAPPING_Y1 + ((discharge_time - MAPPING_X1) */ MAPPING_M)
+  pulse_width = pulse_width MIN 500 MAX 1000
+
+  ' Generate Pulse-Width Waveform for Servo
+  pulse_width = pulse_width MIN 500 MAX 1000
+  PULSOUT SERVO_PIN, pulse_width
+  PAUSE (19 - CHARGE_TIME)
+LOOP
+
+
+
+
