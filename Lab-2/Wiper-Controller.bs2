@@ -37,7 +37,7 @@ DO
   delta_pulse_width = MAPPING_Y1 + ((discharge_time - MAPPING_X1) */ MAPPING_M)
 
   ' Change the pulse_width based on the delta_ variable and the current direction
-  IF (direction = 0) THEN Invert_Delta_Pulse_Width
+  IF (direction = 0) THEN Invert_Delta_Variable
   Invert_Return:
   pulse_width = pulse_width + delta_pulse_width
 
@@ -52,7 +52,7 @@ DO
   PAUSE (19 - CHARGE_TIME)
 LOOP
 
-Invert_Delta_Pulse_Width:
+Invert_Delta_Variable:
   ' Two's Complement
   delta_pulse_width = 1 + (~delta_pulse_width)
 GOTO Invert_Return

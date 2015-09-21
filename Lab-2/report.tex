@@ -77,6 +77,7 @@ To avoid dealing with PBASICs strange limitations,
 we can rewrite equation \ref{pulse-width-eq} as
 \begin{equation}
 \textrm{duration}=\frac{50}{9}*\theta+250, \quad 10^{o}<\theta<170^{o}
+\label{duration-eq}
 \end{equation}
 
 Chapter 4 also provided two more expressions in PBASIC that are helpful with servo motors:
@@ -165,14 +166,17 @@ $636.48*2\mu s<t_{discharge}<1272.97*2\mu s$. When we consider
 that the PBASIC Stamp board only has an integer resolution of
 $2 \mu s$, then the expected result from a call to
 \mbox{\texttt{RCTIME, pin, 1, duration}} is in the set
-\begin{equation}
+\begin{equation*}
 \textrm{\texttt{duration}}=\{637, 638, 639,...1272, 1273\}
-\end{equation}
-when the 10 k$\Omega$ potentiometer is used with a 0.1 $\mu F$ capacitor.
+\end{equation*}
+when used with a 0.1 $\mu F$ capacitor.
 
-Actual testing showed an experimental range of
+Actual testing showed with the circuit shown in
+\hyperref[rudder-circuit]{figure \ref{rudder-circuit}}
+showed an experimental range of
 \begin{equation}
 \textrm{\texttt{duration}}=\{619, 620, 621,...1288, 1289\}
+\label{discharge-time-domain}
 \end{equation}
 
 \subsection{Rudder Controller}
@@ -184,6 +188,66 @@ Actual testing showed an experimental range of
 \label{rudder-circuit}
 \end{figure}
 
+The circuit contructed for the rudder controller is shown in figure
+\ref{rudder-circuit}. In the potentiometer input circuit, a 220 $\Omega$
+resistor is used to prevent a current inrush greater than the maximum
+I/O pin current for the microcontroller.
+\begin{equation*}
+R_{limiter(MIN)}=\frac{V_{CC}-V_{SS}}{I_{I/O(MAX)}}=\frac{5V}{25mA}=200\Omega
+\end{equation*}
+
+The transient discharge of this potentiometer circuit was solved in
+equation \ref{rc-decay-eq}, assuming that the charged voltage was nearly 5V.
+To ensure that the potentiometer's parallel path to ground does not significantly
+affect the charging time or the charging potential, resistor $R_{2}$ was
+selected to be 10 $k\Omega$ such that $R_{2}+R_{pot}>>R_{1}$ for all values
+of $R_{pot}$. With this assumption, charging current through $R_{pot}$
+can be neglected and the charging time is approximately
+\begin{equation*}
+\tau_{charge}=220\Omega*0.1\mu F=0.022 ms
+\end{equation*}
+Based on $\tau_{charge}$, a charging \texttt{PAUSE} of 1 ms is more than adequate.
+
+From theory (\hyperref[t-discharge-eq]{equation \ref{t-discharge-eq}})
+and testing (\hyperref[discharge-time-domain]{set \ref{discharge-time-domain}}),
+the domain of input discharge time values is 619--1289.
+The output range should drive the servo between $45^{o}$--$135^{o}$.
+Using \hyperref[duration-eq]{equation \ref{duration-eq}}, the output
+range should be 500--1000. The mapping should be linear:
+\begin{equation*}
+y_{2}-y_{1}=m(x_{2}-x_{1})
+\end{equation*}
+
+\begin{equation*}
+1000-500=m(1289-619)
+\end{equation*}
+
+\begin{equation*}
+m=0.746=\frac{191}{256}
+\end{equation*}
+
+\begin{equation*}
+y_{2}=0.746(x_{2}-619)+500
+\end{equation*}
+
+The microcontroller cannot do floating point arithmetic, but it does
+have a fractional (middle) multiplication operator that allows you
+to multiply by fractions of 256. Thus the final mapping equation is
+\begin{equation}
+t_{p-width}=\frac{191}{256}(t_{discharge-time}-619)+500
+\end{equation}
+where both times are in units of $2\mu s$. This is implemented:
+
+\begin{center}
+\mbox{\texttt{pulse\_width = ((discharge\_time - 619) */ 191) + 500}}
+\end{center}
+
+Once the potentiometer circuit's discharge time has been mapped
+to a pulse width, all that remains is to output the pulse and loop
+indefinitely with an appropriate delay period to complete the pulse-
+width modulation and input monitoring. The flowchart for the implentation
+is shown in \hyperref[rudder-flowchart]{figure \ref{rudder-flowchart}}.
+
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.5\textwidth]{rudder-flowchart.pdf}
@@ -192,6 +256,59 @@ Actual testing showed an experimental range of
 \end{figure}
 
 \subsection{Wiper Controller}
+
+The wiper controller used the same circuit as the rudder controller
+(\hyperref[rudder-circuit]{figure \ref{rudder-circuit}}); the only
+difference between the two is the implementation. The rudder controls
+angular position, while the wiper implementation controls angular speed.
+
+The maximum frequency at which the pulse width, and thus angular position,
+can be changed is the inverse of the pulse width period.
+\begin{equation*}
+f_{max}=\frac{1}{T}=\frac{1}{20ms}=50 Hz
+\end{equation*}
+
+At this frequency (or a integer fraction of this frequency),
+angular velocity can be controled by varying the magnitude
+of change in pulse width per period.
+\begin{equation}
+\omega\propto\frac{\Delta(\textrm{pulse width})}{T}
+\end{equation}
+
+The maximum value for $\Delta$pulse\_width comes from the full range
+of motion, which is specified for this project as $15^{o}<\theta<160^{o}$.
+From \hyperref[duration-eq]{equation \ref{duration-eq}},
+this corresponds to \mbox{\texttt{333 < duration < 1139}}.
+So the maximum potential swing per period is
+\begin{equation*}
+1139-333=806*[2\mu s]
+\end{equation*}
+
+For smoothness, we will reduce the maximum swing per period
+by a factor of 16 (somewhate arbitrarily), leaving us with 50 possible speeds.
+Now, like was done for the rudder controller, the discharge\_time domain of 619--1289
+needs to be mapped linearly to 50 speeds, starting at speed 0.
+\begin{equation*}
+50-0=m(1289-619)
+\end{equation*}
+
+\begin{equation*}
+m=0.0746\approx\frac{19}{256}
+\end{equation*}
+
+\begin{equation}
+\Delta\textrm{pulse\_width}_{(\textrm{per period})}=\frac{19}{256}(t_{\textrm{discharge}}-619)
+\end{equation}
+where again the pulse width, discharge time, and 619 constant are in units of 2 $\mu s$.
+
+We have the the pulse width interval the wiper's range of motion,
+we have a function for potentiometer input from the rudder project,
+we have a mapping between the potentiometer discharge time and rate of change in pulse width;
+all that is needed is an implementation. The implementation flowchart
+is more complicated than the rudder controller because the wiper has to
+continuously rotate between two extremes and change directions, in addition
+to monitoring the pot. and varying speed. How this is done is shown in the
+implementation flowchart in \hyperref[wiper-flowchart]{figure \ref{wiper-flowchart}}.
 
 \begin{figure}[ht]
 \centering
@@ -252,14 +369,14 @@ and \hyperref[wiper-controller]{figure \ref{wiper-controller}}.
 \begin{figure}
 \centering
 \includegraphics[width=0.6\textwidth]{rudder-controller.jpg}
-\caption{Rudder Controller Board}
+\caption{Rudder Position Controller Board}
 \label{rudder-controller}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=0.6\textwidth]{wiper-controller.jpg}
-\caption{Wiper Controller Board}
+\caption{Wiper Speed Controller Board}
 \label{wiper-controller}
 \end{figure}
 
@@ -270,7 +387,7 @@ and \hyperref[wiper-controller]{figure \ref{wiper-controller}}.
 There were no exercises given.
 
 \clearpage
-\section{Programs}
+\section{Implementation Code}
 
 \subsection{Rudder Controller}
 \begingroup
