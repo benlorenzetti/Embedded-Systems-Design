@@ -250,7 +250,7 @@ is shown in \hyperref[rudder-flowchart]{figure \ref{rudder-flowchart}}.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.5\textwidth]{rudder-flowchart.pdf}
+\includegraphics[width=0.65\textwidth]{rudder-flowchart.pdf}
 \caption{Rudder Controller Implementation Flowchart}
 \label{rudder-flowchart}
 \end{figure}
@@ -312,7 +312,7 @@ implementation flowchart in \hyperref[wiper-flowchart]{figure \ref{wiper-flowcha
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.5\textwidth]{wiper-flowchart.pdf}
+\includegraphics[width=0.65\textwidth]{wiper-flowchart.pdf}
 \caption{Wiper Controller Flowchart}
 \label{wiper-flowchart}
 \end{figure}
@@ -359,6 +359,12 @@ high, but it turned out it was only due to a \texttt{DEBUG} statement
 in the loop that was throwing off the pulse width timing.
 
 Removal of the \texttt{DEBUG} statement fixed the error.
+
+Another bug was that at the higher speeds the servo did not have
+time to swing the full range of motion before a new command was
+recieved in the opposite direction. To fix this, I added a second
+pulse width in every iteration of the loop to reduce the maximum
+speed by half.
 
 \section{Observations}
 

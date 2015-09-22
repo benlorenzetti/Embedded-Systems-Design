@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.1.28)  21 SEP 2015 02:34
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.1.28)  22 SEP 2015 16:23
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -439,76 +439,61 @@ Package pdftex.def Info: rudder-circuit.pdf used on input line 186.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[4]
+[4] <rudder-flowchart.pdf, id=178, 443.25601pt x 311.4837pt>
+File: rudder-flowchart.pdf Graphic file (type pdf)
 
-LaTeX Warning: File `rudder-flowchart.pdf' not found on input line 253.
+<use rudder-flowchart.pdf>
+Package pdftex.def Info: rudder-flowchart.pdf used on input line 253.
+(pdftex.def)             Requested size: 305.33789pt x 214.56752pt.
+ [5 <./rudder-circuit.pdf>] [6 <./rudder-flowchart.pdf>] <wiper-flowchart.pdf, 
+id=217, 450.9648pt x 692.10571pt>
+File: wiper-flowchart.pdf Graphic file (type pdf)
 
-
-! Package pdftex.def Error: File `rudder-flowchart.pdf' not found.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.253 ...idth=0.5\textwidth]{rudder-flowchart.pdf}
-                                                  
-? 
-[5 <./rudder-circuit.pdf>] [6]
-
-LaTeX Warning: File `wiper-flowchart.pdf' not found on input line 315.
-
-
-! Package pdftex.def Error: File `wiper-flowchart.pdf' not found.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.315 ...width=0.5\textwidth]{wiper-flowchart.pdf}
-                                                  
-? 
-
+<use wiper-flowchart.pdf>
+Package pdftex.def Info: wiper-flowchart.pdf used on input line 315.
+(pdftex.def)             Requested size: 305.33789pt x 468.6297pt.
+ [7 <./wiper-flowchart.pdf>]
 Overfull \hbox (6.84915pt too wide) in paragraph at lines 342--349
 \OT1/cmr/m/n/10.95 (-20) lower than the min-i-mum value I was ex-pect-ing. Thus
  the sub-rac-tion []
  []
 
-[7] <rudder-controller.jpg, id=214, 3276.24pt x 2457.18pt>
+<rudder-controller.jpg, id=240, 3276.24pt x 2457.18pt>
 File: rudder-controller.jpg Graphic file (type jpg)
 
 <use rudder-controller.jpg>
-Package pdftex.def Info: rudder-controller.jpg used on input line 371.
+Package pdftex.def Info: rudder-controller.jpg used on input line 377.
 (pdftex.def)             Requested size: 281.85587pt x 211.38835pt.
 
-<wiper-controller.jpg, id=215, 3276.24pt x 2457.18pt>
+<wiper-controller.jpg, id=241, 3276.24pt x 2457.18pt>
 File: wiper-controller.jpg Graphic file (type jpg)
 
 <use wiper-controller.jpg>
-Package pdftex.def Info: wiper-controller.jpg used on input line 378.
+Package pdftex.def Info: wiper-controller.jpg used on input line 384.
 (pdftex.def)             Requested size: 281.85587pt x 211.38835pt.
- [8 <./rudder-controller.jpg>] [9 <./wiper-controller.jpg>]
+ [8] [9 <./rudder-controller.jpg> <./wiper-controller.jpg>]
 File: Rudder-Controller.bs2  (verbatim)
  [10
 
 ]
 File: Wiper-Controller.bs2  (verbatim)
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 409.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 415.
  [11
 
 ]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 409.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 415.
  (./report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 409.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 409.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 415.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 415.
 Package rerunfilecheck Info: File `report.out' has not changed.
 (rerunfilecheck)             Checksum: 0F972537901C663D0025DD8BDB129556;1111.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 409.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 415.
  ) 
 Here is how much of TeX's memory you used:
- 7817 strings out of 493304
- 117938 string characters out of 6139871
+ 7825 strings out of 493304
+ 118140 string characters out of 6139871
  250106 words of memory out of 5000000
- 11086 multiletter control sequences out of 15000+600000
+ 11094 multiletter control sequences out of 15000+600000
  12454 words of font info for 70 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
  30i,9n,35p,240b,350s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -527,10 +512,10 @@ s/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr
 hare/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/te
 xlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/share/texlive/
 texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb>
-Output written on report.pdf (11 pages, 4215838 bytes).
+Output written on report.pdf (11 pages, 7243180 bytes).
 PDF statistics:
- 301 PDF objects out of 1000 (max. 8388607)
- 246 compressed objects within 3 object streams
+ 327 PDF objects out of 1000 (max. 8388607)
+ 254 compressed objects within 3 object streams
  46 named destinations out of 1000 (max. 500000)
- 11946 words of extra memory for PDF output out of 12000 (max. 10000000)
+ 11956 words of extra memory for PDF output out of 12000 (max. 10000000)
 
