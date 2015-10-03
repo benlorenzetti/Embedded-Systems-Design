@@ -1,0 +1,47 @@
+' Sunshine-on-Planet-Alpha.bs2
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+SLEEP_TIME CON  900
+CHARGE_TIME CON 10
+MAX_DATAPOINTS CON 96
+LED_PIN CON 15
+
+DIRS = (1 << LED_PIN)
+
+rc_time VAR Word
+ram_index VAR Byte
+eeprom_index VAR Word
+restart_test VAR Byte
+
+' Print Data from EEPROM
+READ MAX_DATAPOINTS, eeprom_index
+FOR ram_index = (eeprom_index + 1) TO (MAX_DATAPOINTS - 1)
+  READ ram_index, rc_time
+  DEBUG DEC3 (ram_index - (eeprom_index + 1)), 9, DEC3 rc_time, CR
+NEXT
+FOR ram_index = 0 TO eeprom_index
+  READ ram_index, rc_time
+  DEBUG DEC3 (ram_index + (MAX_DATAPOINTS - eeprom_index)), 9, DEC3 rc_time, CR
+NEXT
+
+' Ask User: Restart Test?
+DEBUG "Restart Test? (y/n): "
+DEBUGIN STR restart_test \1
+DEBUG CR
+IF (restart_test <> 121) THEN Break
+  WRITE MAX_DATAPOINTS, 0
+Break:
+
+DO
+  LOW LED_PIN
+  PAUSE CHARGE_TIME
+  RCTIME LED_PIN, 0, rc_time
+  rc_time = (rc_time >> 8)
+  READ MAX_DATAPOINTS, eeprom_index
+  DEBUG "Writing ", DEC rc_time, " to EEPROM ", DEC (eeprom_index // MAX_DATAPOINTS), CR
+  WRITE (eeprom_index // MAX_DATAPOINTS), rc_time
+  WRITE MAX_DATAPOINTS, ((eeprom_index + 1) // MAX_DATAPOINTS)
+
+  SLEEP SLEEP_TIME
+LOOP
