@@ -11,7 +11,7 @@ PHOTO_TRANSISTOR  CON 7
 T_LIGHT_THRESHOLD CON 80
 ' (0.1uF || 10kOhm || photo-trans.) has max RC discharge time ~ 600 *(2us)
 T_RC_CHARGE       CON 1
-T_10_INCHES       CON 10
+T_10_INCHES       CON 50
 ' Number of main loop iterations per 10 inch conveyor displacement
 T_BLINK           CON 20
 MAX_BOX_LENGTH    CON 4
@@ -143,7 +143,6 @@ GOTO Main_Loop
 Jam_Detected_to_Jam_Detected:
   blink_alarm = (blink_alarm ^ 1)
 GOTO Continue
-
 
 
 
