@@ -1,0 +1,5 @@
+# Ignore LaTeX Build Files
+*.aux
+*.log
+*.out
+*.toc
