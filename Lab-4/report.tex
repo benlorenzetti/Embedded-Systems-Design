@@ -1,0 +1,148 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage[colorlinks=false, hidelinks]{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
+
+
+\begin{document}
+
+\title{The Last Music Trainer\\Embedded System Design, Lab 4}
+\date{October 8, 2015}
+\author{Ben Lorenzetti}
+\maketitle
+
+\tableofcontents
+
+\clearpage
+
+\section{Objectives and Problem Descriptions}
+\subsection{Beginner Music Trainer}
+\label{problem-specs}
+
+The objective of this lab is to develop microcontroller-based, beginner music trainer 
+with the following features:
+\begin{enumerate}
+
+\item Be capable of playing simple songs using PBasic's 
+\mbox{\texttt{FREQOUT Pin, Duraction, Freq1 \{, Freq2\}}} command.
+This including the ability to
+\begin{enumerate}
+\item[a.] play any piano tone in the $4^{\textrm{th}}$--$7^{\textrm{th}}$ octave
+\{C, C\#, D, D\#, E, F, F\#, G, G\#, A, A\#, B\};
+
+\item[b.] change the base tempo's whole note duration;
+
+\item[c.] play each note for \{1, $\nicefrac{1}{2}$, $\nicefrac{1}{4}$, $\nicefrac{1}{8}$,
+$\nicefrac{1}{16}$, $\nicefrac{1}{32}$\} of the base tempo;
+
+\item[d.] play each note for $1\frac{1}{2}*\{1$, $\nicefrac{1}{2}$, $\nicefrac{1}{4}$, $\nicefrac{1}{8}$, 
+$\nicefrac{1}{16}$, $\nicefrac{1}{32}$\} (dotten notes) of the base tempo; and
+
+\item[e.] play two tones simultaneously over the same duration.
+\end{enumerate}
+
+\item allow user to select from a menu of 5 Ring Tone Text Transfer Language
+(RTTTL) songs,
+using a pushbutton switch--each push causes an advance to the next song.
+
+\item allow user to increase the base tempo by a factor of 1--4 using a potentiometer rotary knob.
+
+\item display the current note being played on a 7-segment display,
+using the decimal point to indicate sharp notes.
+Furthermore, display the note's octave with individual LEDs.
+
+\item play each song in an infinite loop if user does not advance to the next song.
+\end{enumerate}
+
+\section{Procedure}
+\subsection{Circuit Design}
+
+\begin{figure}[h!]
+\centering
+	\begin{subfigure}[b]{.3\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{piezo-circuit.pdf}
+		\caption[]%
+		{{\small Piezo Circuit}}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.65\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{pushbutton-circuit.pdf}
+		\caption[]%
+		{{Pushbutton Switch Circuit}}
+	\end{subfigure}
+	\vskip\baselineskip
+	\begin{subfigure}[b]{0.3\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{potentiometer-circuit.pdf}
+		\caption[]%
+		{{Potentiometer RC Circiut}}
+	\end{subfigure}
+	\quad
+	\begin{subfigure}[b]{0.65\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{LED-display-circuit.pdf}
+		\caption[]%
+		{{LED Display Circuit}}
+	\end{subfigure}	
+	\caption{Hardware for The Last Music Trainer}
+	\label{circuit-diagrams}
+\end{figure}
+
+\subsection{Data Design}
+
+\begin{center}
+\includegraphics[width=.4\textwidth]{one-byte-data-analysis.pdf}
+\caption{Breakdown of 1-Byte, 1-Note Data}
+\label{one-byte-data-breakdown}
+\end{center}
+
+\begin{table}
+\centering
+\caption{Single Byte Data Lookup Table}
+\begin{tabular}{c c c}
+\hline\hline
+\end{tabular}
+\label{data-lookup-table}
+\end{table}
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{two-tone-data-analysis.pdf}
+\caption{Breakdown of 2-Byte, 2-Tone Data}
+\label{two-byte-data-breakdown}
+\end{center}
+
+\subsection{Data Generation from RTTTL Files}
+
+\subsection{Implementation Flowchart}
+
+\section{Expected Results}
+\subsection{Why is this a section?}
+I expected my microcontroller and circuit to behave as described in
+\hyperref[problem-specs]{section \ref{problem-specs}}.
+Not going to waste paper by copying the specifications here...
+
+\section{Experiment and Design Revisions}
+
+\section{Observations}
+
+\section{Discussion}
+
+\section{Exercises}
+
+\clearpage
+\section{Implementation Code}
+
+\begingroup
+\fontsize{10pt}{12pt}
+\verbatiminput{The-Last-Music-Trainer.bs2}
+\endgroup
+
+\end{document}
