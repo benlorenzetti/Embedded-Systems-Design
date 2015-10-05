@@ -96,7 +96,7 @@ Is_a_New_Data_Byte_Needed:
 
 Play_and_Reset_Note:
   ' Decode Note
-  note_type = 1 << ((note & TYPE_MASK) >> TYPE_SHIFT)
+  note_type = 1 << (note & $0007)
   duration = MILLISECONDS_PER_MINUTE / (default_tempo * speed_factor * note_type)
   note_dotted = (note & (1 << DOTTED_FLAG)) >> DOTTED_FLAG
   duration = duration + (note_dotted * (duration >> 1))
