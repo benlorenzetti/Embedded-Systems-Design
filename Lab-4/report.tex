@@ -8,6 +8,7 @@
 \usepackage[colorlinks=false, hidelinks]{hyperref}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{listings}
 
 
 \begin{document}
@@ -65,28 +66,28 @@ Furthermore, display the note's octave with individual LEDs.
 
 \begin{figure}[h!]
 \centering
-	\begin{subfigure}[b]{.3\textwidth}
+	\begin{subfigure}[b]{.2\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{piezo-circuit.pdf}
 		\caption[]%
 		{{\small Piezo Circuit}}
 	\end{subfigure}
-	\hfill
-	\begin{subfigure}[b]{0.65\textwidth}
+	\quad
+	\begin{subfigure}[b]{0.45\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{pushbutton-circuit.pdf}
 		\caption[]%
 		{{Pushbutton Switch Circuit}}
 	\end{subfigure}
 	\vskip\baselineskip
-	\begin{subfigure}[b]{0.3\textwidth}
+	\begin{subfigure}[b]{0.45\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{potentiometer-circuit.pdf}
 		\caption[]%
 		{{Potentiometer RC Circiut}}
 	\end{subfigure}
 	\quad
-	\begin{subfigure}[b]{0.65\textwidth}
+	\begin{subfigure}[b]{0.45\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{LED-display-circuit.pdf}
 		\caption[]%
@@ -123,7 +124,15 @@ Furthermore, display the note's octave with individual LEDs.
 
 \subsection{Implementation Flowchart}
 
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.8\textwidth]{music-trainer-flowchart.pdf}
+\caption{Music Trainer Implementation Flowchart}
+\label{music-trainer-flowchart}
+\end{figure}
+
 \section{Expected Results}
+
 \subsection{Why is this a section?}
 I expected my microcontroller and circuit to behave as described in
 \hyperref[problem-specs]{section \ref{problem-specs}}.
@@ -133,16 +142,40 @@ Not going to waste paper by copying the specifications here...
 
 \section{Observations}
 
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.6\textwidth]{the-music-trainer.jpg}
+\caption{My Music Trainer Playing The Final Countdown}
+\label{the-music-trainer}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{memory-map.png}
+\caption{EEPROM Memory Mapping with Six Songs}
+\label{memory-map}
+\end{figure}
+
 \section{Discussion}
 
 \section{Exercises}
 
 \clearpage
+
 \section{Implementation Code}
+
+\subsection{The-Last-Music-Trainer.bs2}
 
 \begingroup
 \fontsize{10pt}{12pt}
 \verbatiminput{The-Last-Music-Trainer.bs2}
 \endgroup
+
+\clearpage
+\subsection{generate-rtttl-song-data.c}
+
+\lstinputlisting[breaklines]{generate-rtttl-song-data.c}
+
+
 
 \end{document}
