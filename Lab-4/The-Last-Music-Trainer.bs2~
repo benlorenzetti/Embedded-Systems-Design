@@ -6,9 +6,6 @@ P_PIEZO CON 13
 P_POT CON 14
 P_SWITCH CON 15
 P_OCT_4 CON 8
-P_OCT_5 CON 9
-P_OCT_6 CON 10
-P_OCT_7 CON 11
 P_SHARP CON 4
 OUTS = $0000 + (1 << P_SWITCH)
 DIRS = $FFFF
@@ -27,7 +24,7 @@ OCTAVE_OFFSET CON 8
 ' Constants Related to the Byte Packing of Song Data
 TEMPO_OFFSET CON 0
 NUMBER_OF_NOTES_OFFSET CON 1
-FIRST_NOTE_OFFSET CON 2
+FIRST_NOTE_OFFSET CON 5
 
 CHARGE_TIME CON 1
 MILLISECONDS_PER_MINUTE CON 60000
@@ -36,9 +33,30 @@ MILLISECONDS_PER_MINUTE CON 60000
 NUMBER_OF_SONGS CON 1
 
 ' Walk of Life; Tempo=160, Notes=34
-DATA 160, 34, 26, 105, 36, 215, 92, 211, 141, 37, 209, 88, 83, 41, 165, 148
-DATA 92, 113, 201, 53, 213, 88, 26, 105, 36, 215, 92, 83, 141, 37, 209, 88
-DATA 82, 41, 165, 148, 92, 115, 77, 53, 150, 68, 99, 77, 5
+DATA 160, 34, 0, 0, 0, 26, 105, 36, 215, 92, 211, 141, 37, 209, 88, 83, 41
+DATA 165, 148, 92, 113, 201, 53, 213, 88, 26, 105, 36, 215, 92, 83, 141
+DATA 37, 209, 88, 82, 41, 165, 148, 92, 115, 77, 53, 150, 68, 99, 77, 5
+
+' Star Wars
+DATA 180, 38, 0, 0, 0, 83, 77, 53, 85, 98, 89, 206, 58, 227, 136, 137, 106
+DATA 57, 235, 140, 35, 38, 170, 229, 172, 51, 206, 26, 162, 92, 83, 77, 53
+DATA 85, 98, 89, 206, 58, 227, 136, 137, 106, 57, 235, 140, 35, 38, 170
+DATA 229, 172, 51, 206, 10
+
+' Monty Python
+DATA 200, 57, 0, 0, 0, 82, 14, 41, 227, 168, 34, 78, 36, 216, 64, 99, 13
+DATA 52, 152, 64, 99, 133, 56, 215, 136, 3, 205, 53, 208, 64, 227, 13, 52
+DATA 229, 92, 35, 142, 56, 215, 64, 131, 205, 53, 216, 96, 115, 141, 24
+DATA 227, 92, 131, 141, 53, 215, 88, 99, 77, 55, 214, 144, 115, 205, 56
+DATA 227, 92, 131, 13, 52, 215, 64, 3, 205, 53, 88, 136, 115, 1
+
+' R Friends
+DATA 80, 17, 0, 0, 0, 34, 137, 37, 136, 84, 34, 137, 37, 200, 96, 67
+DATA 137, 36, 150, 32, 82, 137, 36, 150, 32, 131, 1
+
+' Funky
+DATA 125, 24, 0, 0, 0, 35, 142, 56, 216, 136, 115, 141, 53, 215, 88, 35, 78, 57
+DATA 228, 136, 113, 141, 56, 226, 96, 35, 206, 53, 214, 92, 99, 141, 56, 229, 144
 
 ' Declare Variables
 song VAR Nib
@@ -69,18 +87,17 @@ Reset_Song_Parameters:
   READ ((song_start_index / 8) + TEMPO_OFFSET), default_tempo
   READ ((song_start_index / 8) + NUMBER_OF_NOTES_OFFSET), song_size
   bit_index = song_start_index + (8 * FIRST_NOTE_OFFSET)
+  note = %0001110000
 DEBUG "song=", DEC song, ", song_size=", DEC song_size, ", song_start_index=", DEC song_start_index, ", bit_index=", DEC bit_index, CR
 
 Load_Data_Byte_from_EEPROM:
   READ (bit_index >> 3), data_byte
-DEBUG "data_byte[", DEC (bit_index / 8), "]=", DEC data_byte, CR
 
 Get_Bit_from_Data_Byte:
   current_bit = 1 & (data_byte >> (bit_index // 8))
-DEBUG "current_bit[", DEC bit_index, "]=", DEC current_bit, CR
 
 Is_New_Bit_Part_of_a_New_Note:
-  IF (0 = ((bit_index - ((song + 1) * FIRST_NOTE_OFFSET * 8)) // BITS_PER_NOTE)) THEN Play_and_Reset_Note
+  IF (0 = (bit_index // BITS_PER_NOTE)) THEN Perform_All_User_IO
   'else Load current_bit into note
 
 Load_Bit_into_Note:
@@ -94,42 +111,25 @@ Is_a_New_Data_Byte_Needed:
   'Else'
   GOTO Get_Bit_from_Data_Byte
 
-Play_and_Reset_Note:
-  ' Decode Note
-  note_type = 1 << (note & $0007)
-  duration = MILLISECONDS_PER_MINUTE / (default_tempo * speed_factor * note_type)
-  note_dotted = (note & (1 << DOTTED_FLAG)) >> DOTTED_FLAG
-  duration = duration + (note_dotted * (duration >> 1))
-  note_letter = (note & (NOTE_MASK | SHARP_FLAG)) >> NOTE_SHIFT
-  LOOKUP note_letter, [3520, 3951, 2093, 2349, 2637, 2794, 3136, 0, 3729, 0, 2218, 2489, 0, 2960, 3322, 0], oct7_freq
-  note_octave = (note & OCTAVE_MASK) >> OCTAVE_OFFSET
-  DEBUG "note_type=", BIN3 note_type, ", note_dotted=", DEC note_dotted, ", duration=", DEC duration, ", note_letter=", BIN4 note_letter, ", oct7_freq=", DEC oct7_freq, ", note_octave=", DEC note_octave, CR
-  ' Play the Note
-  FREQOUT P_PIEZO, duration, (oct7_freq >> (3-note_octave))
-  ' Reset Note
-  note = 0
-
-
-
 Perform_All_User_IO:
   ' Display Letter of 7-Segment Display
   note_letter = (note & NOTE_MASK) >> NOTE_SHIFT
-  DEBUG "note_letter=", DEC note_letter
-  LOOKUP note_letter, [$AF, $E3, $C6, $E9, $C7, $87, $6F, $00], note_letter
+  LOOKUP note_letter, [$AF, $E3, $C6, $E9, $C7, $87, $6F, $8F], note_letter
   OUTS = (OUTS & $FF00) | note_letter
   ' Display "Sharp" Decimal Points on 7-Segment Display
   note_sharp = (note & (1 << SHARP_FLAG)) >> SHARP_FLAG
   OUTS = (OUTS & ($FFFF - (1 << P_SHARP))) | (note_sharp << P_SHARP)
+  ' Display Octave LEDs
+  OUTS = (OUTS & ($FFFF - ($F << P_OCT_4))) | (1 << (P_OCT_4 + note_octave))
   ' Read Speed from Potentiometer
   HIGH P_POT
   PAUSE CHARGE_TIME
   RCTIME P_POT, 1, duration
   speed_factor = ((duration - 443) >> 8) + 1
-  DEBUG ", speed_factor=", DEC speed_factor
-  duration = MILLISECONDS_PER_MINUTE / (default_tempo * speed_factor)
+  duration = MILLISECONDS_PER_MINUTE / default_tempo
+  duration = duration * speed_factor
   ' Read Pushbutton Switch for Advancing to Next Song
   pushbutton_switch = (INS & (1 << P_SWITCH)) >> P_SWITCH
-  DEBUG ", pushbutton_switch=", DEC pushbutton_switch, CR
   DIRS = DIRS | (1 << P_SWITCH)
   OUTS = OUTS | (1 << P_SWITCH)
   PAUSE CHARGE_TIME
@@ -137,11 +137,26 @@ Perform_All_User_IO:
   IF (0 = pushbutton_switch) THEN Advance_to_Next_Song
   ' ELSE Is the song Over?
 
+Play_and_Reset_Note:
+  ' Decode Note
+  note_type = (note & TYPE_MASK) >> TYPE_SHIFT
+  duration = duration >> note_type
+  note_dotted = (note & (1 << DOTTED_FLAG)) >> DOTTED_FLAG
+  duration = duration + (note_dotted * (duration >> 1))
+  note_letter = (note & (NOTE_MASK | SHARP_FLAG)) >> NOTE_SHIFT
+  LOOKUP note_letter, [3520, 3951, 2093, 2349, 2637, 2794, 3136, 0, 3729, 0, 2218, 2489, 0, 2960, 3322, 0], oct7_freq
+  note_octave = (note & OCTAVE_MASK) >> OCTAVE_OFFSET
+'  DEBUG "note_type=", BIN3 note_type, ", note_dotted=", DEC note_dotted, ", duration=", DEC duration, ", note_letter=", BIN4 note_letter, ", oct7_freq=", DEC oct7_freq, ", note_octave=", DEC note_octave, CR
+  ' Play the Note
+  IF (0 = oct7_freq) THEN Skip_Conditional
+    FREQOUT P_PIEZO, duration, (oct7_freq >> (3-note_octave))
+  Skip_Conditional:
+  ' Reset Note
+  note = 0
+
 Is_the_Song_Over:
-  DEBUG "Is the song Over?...", CR
   IF (bit_index = (song_start_index + (song_size * BITS_PER_NOTE) + (FIRST_NOTE_OFFSET * 8))) THEN Reset_Song_Parameters
   ' ELSE
-  DEBUG "...no", CR
   GOTO Load_Bit_into_Note:
 
 Advance_to_Next_Song:
@@ -149,11 +164,12 @@ Advance_to_Next_Song:
   song = (song + 1) // NUMBER_OF_SONGS
   bit_index = 0
   i VAR Nib
-  FOR i = 1 TO song
+  i = 0
+  DO WHILE (i < song)
     READ ((bit_index / 8) + NUMBER_OF_NOTES_OFFSET), data_byte
     bit_index = bit_index + (8 * FIRST_NOTE_OFFSET) + (10 * data_byte)
     i = i + 1
-  NEXT
+  LOOP
   song_start_index = bit_index
   DEBUG "song_start_index set to ", DEC bit_index, CR
   GOTO Reset_Song_Parameters:

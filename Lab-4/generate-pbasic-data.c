@@ -147,7 +147,7 @@ int main (int argc, char* argv[])
 	}
 
 	printf ("\nPacked Data Array: ([Beats per Minute][Total Notes][Byte 1][Byte 2]...[Byte N] where N = Total Notes * 10/8 rounded up)\n");
-	printf ("%d, %d", default_beat, note_buffer_size);
+	printf ("%d, %d, 0, 0, 0", default_beat, note_buffer_size);
 	for (int i=0; i<data_buffer_size; i++)
 		printf (", %d", (int) data_buffer[i]);
 	printf ("\n");
