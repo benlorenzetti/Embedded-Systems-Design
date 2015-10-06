@@ -25,50 +25,46 @@ OCTAVE_OFFSET CON 8
 ' Constants Related to the Byte Packing of Song Data
 TEMPO_OFFSET CON 0
 NUMBER_OF_NOTES_OFFSET CON 1
-FIRST_NOTE_OFFSET CON 5
+FIRST_NOTE_OFFSET CON 2
 
 ' Timing Constants
 CHARGE_TIME CON 1
 MILLISECONDS_PER_MINUTE CON 60000
 
 ' Store Several Songs in EEPROM
-NUMBER_OF_SONGS CON 7
+NUMBER_OF_SONGS CON 6
 
-' 1. Walk of Life; Tempo=160, Notes=34
-DATA 160, 34, 0, 0, 0, 26, 105, 36, 215, 92, 211, 141, 37, 209, 88, 83, 41
-DATA 165, 148, 92, 113, 201, 53, 213, 88, 26, 105, 36, 215, 92, 83, 141
-DATA 37, 209, 88, 82, 41, 165, 148, 92, 115, 77, 53, 150, 68, 99, 77, 5
+' 1. Let it Be
+DATA 100, 26, 68, 206, 40, 34, 145, 99, 14, 184, 38, 153, 99, 14, 73
+DATA 227, 136, 4, 141, 165, 164, 92, 67, 18, 185, 229, 144, 67, 206, 72, 23
+DATA 145, 52, 206, 8
 
-' 2. Star Wars
-DATA 180, 38, 0, 0, 0, 83, 77, 53, 85, 98, 89, 206, 58, 227, 136, 137, 106
-DATA 57, 235, 140, 35, 38, 170, 229, 172, 51, 206, 26, 162, 92, 83, 77, 53
-DATA 85, 98, 89, 206, 58, 227, 136, 137, 106, 57, 235, 140, 35, 38, 170
-DATA 229, 172, 51, 206, 10
-
-' 3. Final Countdown
-DATA 125, 42, 0, 0, 0, 20, 17, 36, 145, 80, 114, 205, 69, 34, 69, 35, 78, 36
+' 2. Final Countdown
+DATA 125, 42, 20, 17, 36, 145, 80, 114, 205, 69, 34, 69, 35, 78, 36
 DATA 144, 92, 115, 145, 72, 145, 136, 66, 201, 53, 23, 65, 100, 13, 52, 214
 DATA 116, 3, 169, 69, 29, 89, 10, 145, 69, 208, 68, 3, 141, 53, 157, 80, 34
 DATA 102, 68, 17, 137, 20, 17, 4
 
-' 4. Friends Theme
-DATA 80, 17, 0, 0, 0, 34, 137, 37, 136, 84, 34, 137, 37, 200, 96, 67, 137, 36
-DATA 150, 32, 82, 137, 36, 150, 32, 131, 1
+' 3. Star Wars
+DATA 180, 38, 83, 77, 53, 85, 98, 89, 206, 58, 227, 136, 137, 106
+DATA 57, 235, 140, 35, 38, 170, 229, 172, 51, 206, 26, 162, 92, 83, 77, 53
+DATA 85, 98, 89, 206, 58, 227, 136, 137, 106, 57, 235, 140, 35, 38, 170
+DATA 229, 172, 51, 206, 10
 
-' 5. Let it Be
-DATA 100, 26, 0, 0, 0, 68, 206, 40, 34, 145, 99, 14, 184, 38, 153, 99, 14, 73
-DATA 227, 136, 4, 141, 165, 164, 92, 67, 18, 185, 229, 144, 67, 206, 72, 23
-DATA 145, 52, 206, 8
+' 4. Walk of Life; Tempo=160, Notes=34
+DATA 160, 34, 26, 105, 36, 215, 92, 211, 141, 37, 209, 88, 83, 41
+DATA 165, 148, 92, 113, 201, 53, 213, 88, 26, 105, 36, 215, 92, 83, 141
+DATA 37, 209, 88, 82, 41, 165, 148, 92, 115, 77, 53, 150, 68, 99, 77, 5
 
-' 6. Tarzan
-DATA 120, 54, 0, 0, 0, 67, 77, 53, 22, 137, 99, 145, 72, 22, 137, 99, 201, 56
+' 5. Tarzan
+DATA 120, 54, 67, 77, 53, 22, 137, 99, 145, 72, 22, 137, 99, 201, 56
 DATA 214, 90, 34, 202, 53, 213, 88, 3, 145, 56, 16, 137, 4, 145, 56, 144, 140
 DATA 99, 173, 37, 162, 92, 67, 77, 53, 22, 137, 99, 145, 72, 22, 137, 99, 201
 DATA 56, 214, 90, 34, 202, 53, 213, 88, 3, 145, 56, 16, 137, 4, 145, 56, 144
 DATA 140, 99, 173, 5
 
-' 7. Van Halen Eruption
-DATA 120, 299, 0, 0, 0, 165, 146, 86, 84, 121, 164, 21, 85, 30, 105, 69, 149
+' 6. Van Halen Eruption
+DATA 120, 299, 165, 146, 86, 84, 121, 164, 21, 85, 30, 105, 69, 149
 DATA 71, 90, 81, 165, 146, 86, 84, 121, 164, 21, 85, 30, 105, 69, 149, 71, 90
 DATA 81, 5, 145, 86, 84, 65, 164, 21, 85, 16, 105, 69, 21, 68, 90, 81, 5, 145
 DATA 86, 84, 65, 164, 21, 85, 16, 105, 69, 21, 68, 90, 109, 5, 209, 86, 93, 65
@@ -83,7 +79,7 @@ DATA 21, 73, 81, 121, 69, 82, 84, 94, 145, 21, 145, 87, 100, 69, 228, 21, 89, 17
 DATA 121, 69, 178, 87, 100, 121, 20, 21, 201, 81, 145, 21, 209, 88, 100, 97, 164
 DATA 22, 89, 24, 169, 69, 22, 68, 98, 145, 5, 145, 88, 100, 121, 20, 21, 89, 94
 DATA 69, 53, 22, 89, 17, 141, 69, 86, 68, 99, 145, 133, 145, 90, 100, 97, 164, 22
-DATA 89, 16, 137, 69, 22, 68, 98, 145, 229, 81, 84, 100, 121, 20, 213, 88, 16, 
+DATA 89, 16, 137, 69, 22, 68, 98, 145, 229, 81, 84, 100, 121, 20, 213, 88, 16
 DATA 137, 53, 22, 68, 98, 141, 229, 81, 84, 99, 121, 20, 213, 88, 22, 97, 53, 150
 DATA 69, 88, 141, 213, 21, 68, 99, 117, 5, 145, 88, 22, 97, 37, 150, 69, 88, 137
 DATA 213, 17, 84, 98, 117, 4, 149, 88, 21, 121, 37, 86, 69, 94, 137, 69, 145, 85
@@ -97,7 +93,7 @@ song VAR Nib
 note VAR Word
 current_bit VAR Bit
 bit_index VAR Word
-song_start_index VAR Word
+song_start_byte VAR Word
 data_byte VAR Byte
 note_type VAR Nib
 note_dotted VAR Bit
@@ -115,17 +111,19 @@ pushbutton_switch VAR Bit
 
 Start:
 song = 0
-song_start_index = 0
+song_start_byte = 0
 
 Reset_Song_Parameters:
-  READ ((song_start_index / 8) + TEMPO_OFFSET), default_tempo
-  READ ((song_start_index / 8) + NUMBER_OF_NOTES_OFFSET), song_size
-  bit_index = song_start_index + (8 * FIRST_NOTE_OFFSET)
+  PAUSE 1000
+  READ (song_start_byte + TEMPO_OFFSET), default_tempo
+  READ (song_start_byte + NUMBER_OF_NOTES_OFFSET), song_size
+  bit_index = 0
   note = %0001110000
-DEBUG "song=", DEC song, ", song_size=", DEC song_size, ", tempo=", DEC default_tempo, ", song_start_index=", DEC song_start_index, CR
+  DEBUG "song=", DEC song, ", song_size=", DEC song_size, ", tempo=", DEC default_tempo
+  DEBUG ", song_start_byte=", DEC song_start_byte, CR
 
 Load_Data_Byte_from_EEPROM:
-  READ (bit_index >> 3), data_byte
+  READ (song_start_byte + FIRST_NOTE_OFFSET + (bit_index >> 3)), data_byte
 
 Get_Bit_from_Data_Byte:
   current_bit = 1 & (data_byte >> (bit_index // 8))
@@ -180,7 +178,6 @@ Play_and_Reset_Note:
   note_letter = (note & (NOTE_MASK | SHARP_FLAG)) >> NOTE_SHIFT
   LOOKUP note_letter, [3520, 3951, 2093, 2349, 2637, 2794, 3136, 0, 3729, 0, 2218, 2489, 0, 2960, 3322, 0], oct7_freq
   note_octave = (note & OCTAVE_MASK) >> OCTAVE_OFFSET
-'  DEBUG "note_type=", BIN3 note_type, ", note_dotted=", DEC note_dotted, ", duration=", DEC duration, ", note_letter=", BIN4 note_letter, ", oct7_freq=", DEC oct7_freq, ", note_octave=", DEC note_octave, CR
   ' Play the Note
   IF (0 = oct7_freq) THEN Skip_Conditional
     FREQOUT P_PIEZO, duration, (oct7_freq >> (3-note_octave))
@@ -189,12 +186,12 @@ Play_and_Reset_Note:
   note = 0
 
 Is_the_Song_Over:
-  IF (bit_index >= (song_start_index + (song_size * BITS_PER_NOTE) + (FIRST_NOTE_OFFSET * 8))) THEN Reset_Song_Parameters
+  IF (bit_index >= (song_size * BITS_PER_NOTE)) THEN Reset_Song_Parameters
   ' ELSE
   GOTO Load_Bit_into_Note:
 
 Advance_to_Next_Song:
-  PAUSE 500
+  PAUSE 1000
   ' Recharge the switch again--just in case someone has sticky fingers
   DIRS = DIRS | (1 << P_SWITCH)
   OUTS = OUTS | (1 << P_SWITCH)
@@ -202,16 +199,12 @@ Advance_to_Next_Song:
   DIRS = DIRS & ($FFFF - (1 << P_SWITCH))
   ' Find the song start location in EEPROM
   song = (song + 1) // NUMBER_OF_SONGS
-  bit_index = 0
+  song_start_byte = 0
   i VAR Nib
   i = 0
   DO WHILE (i < song)
-    READ ((bit_index / 8) + NUMBER_OF_NOTES_OFFSET), data_byte
-    DEBUG "in loop data_byte=", DEC data_byte, CR
-    bit_index = bit_index + (8 * FIRST_NOTE_OFFSET) + (10 * data_byte)
-    bit_index = ((bit_index + 7) >> 3) << 3
+    READ (song_start_byte + NUMBER_OF_NOTES_OFFSET), data_byte
+    song_start_byte = song_start_byte + FIRST_NOTE_OFFSET + (((data_byte * BITS_PER_NOTE) + 7) / 8)
     i = i + 1
   LOOP
-  song_start_index = bit_index
-  DEBUG "song_start_index set to ", DEC song_start_index, CR
   GOTO Reset_Song_Parameters:
