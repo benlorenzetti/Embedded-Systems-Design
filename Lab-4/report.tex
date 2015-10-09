@@ -129,11 +129,6 @@ y=\frac{1}{256}\left( \frac{\tau}{[2\mu s]}-443 \right) +1
 
 \subsection{Data Design}
 
-\begin{center}
-\includegraphics[width=.4\textwidth]{one-byte-data-analysis.pdf}
-\label{one-byte-data-breakdown}
-\end{center}
-
 \begin{table}
 \centering
 \caption{10-Bit Note Encoding Truth Table}
@@ -179,23 +174,85 @@ Length				&$*$	&Bit Code	&Dec.	&Whole Note Divisor	&Letter		&\#	&Bit Code	&Dec.	
 \label{data-lookup-table}
 \end{table}
 
+For this project, many songs will have to be stored in the Stamp's nonvolatile
+EEPROM memory. The smaller the format of the song data, the better, because
+more-and longer-songs will be able to be played.
+Based on the full set of possible notes from the specification in
+\hyperref[problem-specs]{section \ref{problem-specs}} and on the RTTTL data format,
+the full information for a single note can be encoded in 10 bits.
+
+A single note is encoded according to the following scheme:
+\begin{verbatim}
+Bits[9:8] = Note Octave
+Bit [7]   = Sharp Flag
+Bits[6:4] = Note Letter
+Bit [3]   = Dotted Flag
+Bits[2:0] = Note Type (whole, half, etc.)
+\end{verbatim}
+For example, listed most-significant bit first, the note \texttt{00|1|001|0|010 = 146}
+would be octave=00, sharp=1, letter=1, dotted=0, and note\_type=010.
+The mapping of the bit codes to physical, musical quantities are shown in
+\hyperref[data-lookup-table]{table \ref{data-lookup-table}}.
+
+For a full song, the data is encoded according to the following byte scheme:
+\begin{verbatim}
+[Song X Base Tempo Byte] [Song Length Byte] [Data Byte 0] [Data Byte 1] ...
+... [Data Byte N] [Song X+1 Base Tempo Byte]...
+\end{verbatim}
+There are two bytes for the song meta data, a base tempo of 0-255 beats per minute and song length of 0-255 notes.
+The number of data bytes is $N=\textrm{number of notes}*\frac{\textrm{10bits/note}}{\textrm{8 bits/byte}}$.
+If the size of the data does not fall on a byte boundary, N is rounded up to the nearest integer and the
+extra bits are padded with zeros. The next song starts at byte N+1.
+
+The bit and byte packing orders are both least significant first.
+For example, take bytes 0-4 of Let it Be by the Beatles.
+\begin{verbatim}
+|  B0=100  |  B1=26   |  B2=68   |  B3=206   | B4=40     |
+| 00100110 | 01011000 | 00100010 | 01 110011 | 0001 0100 |
+|Base Tempo|-#of Notes|----Note 0----|---Note 1----|-Low 4 Bits of Note 2 |
+| 00100110 | 01011000 | 00100010   01|110011   0001|0100                  |
+\end{verbatim}
+For human decoding, Note 0 is rewritten with its most-significant bit first:
+\begin{verbatim}
+Note 0 = 1001000100; octave=10, sharp=0, letter=100, dotted=0, note_type=100
+\end{verbatim}
+
 \subsection{Data Generation from RTTTL Files}
+
+It would be very monotonous to encode RTTTL songs to my 10-bit format by hand,
+so I wrote a C script for automating the process. This program is included in
+\hyperref[generate-rtttl-songs-section]{section \ref{generate-rtttl-songs-section}}.
 
 \subsection{Implementation Flowchart}
 
-\begin{figure}[h!]
+\begin{figure}
 \centering
 \includegraphics[width=0.8\textwidth]{music-trainer-flowchart.pdf}
 \caption{Music Trainer Implementation Flowchart}
 \label{music-trainer-flowchart}
 \end{figure}
 
+Unfortunately the minimum size for a note (10 bits) does not fall evenly
+on a byte boundary. Therefore, there is a tradeoff between data compactness
+and program complexity. I chose to prioritize data compactness, and the result
+is a programming implementation with most of its complexity involved
+in unpacking data.
+
+The implementation flowchart is shown in
+\hyperref[music-trainer-flowchart]{figure \ref{music-trainer-flowchart}}.
+Most of the states and logic are dedicated to unpacking data in a bitwise
+manner. The only states/transitions not involved in the bitwise unpacking
+of data are shown as dotted lines in the flowchart.
+
 \section{Expected Results}
 
-\subsection{Why is this a section?}
-I expected my microcontroller and circuit to behave as described in
+\subsection{Laboratory Demonstration}
+
+I expected my microcontroller and circuit to behave as described by the problem specifications in
 \hyperref[problem-specs]{section \ref{problem-specs}}.
-Not going to waste paper by copying the specifications here...
+For the lab demonstration, the TA should be able to recognize at least 5 songs,
+switch between songs with the pushbutton, change the song speed, and
+see notes displayed on the 7-segment display and octave LEDs.
 
 \section{Experiment and Design Revisions}
 
@@ -232,6 +289,7 @@ Not going to waste paper by copying the specifications here...
 
 \clearpage
 \subsection{generate-rtttl-song-data.c}
+\label{generate-rtttl-songs-section}
 
 \lstinputlisting[breaklines]{generate-rtttl-song-data.c}
 
