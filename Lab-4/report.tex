@@ -256,16 +256,45 @@ see notes displayed on the 7-segment display and octave LEDs.
 
 \section{Experiment and Design Revisions}
 
+\subsection{Changes During Debugging}
+
+During debugging, I spend some time fixing problems associated with the bit packing scheme.
+There were three other bugs I fixed:
+
+First, I was implementing pause notes as notes of zero frequency (\texttt{FREQOUT pin, duration, 0}),
+but this resulting is a clicking noise that was unpleasent. I fixed this by wrapping the
+\texttt{FREQOUT} statement with \text{IF (freq=0)} logic. 
+
+Second, the songs were being played too fast. I fixed this by moving the speed factor
+from the potentionmenter (1-4) from the denominator of the duration variable to the
+numerator.
+
+Third, an A note was being played at the beginning of every song. I fixed this by adding
+an initialization value for \texttt{note} in the \text{Reset\_Song\_Parameters} state.
+
 \section{Observations}
 
-\begin{figure}[h!]
+\subsection{Sound Intensity and Memory Mapping}
+
+The last music trainer worked as expected after some initial debugging.
+I did notice two interesting things. 
+First, the piezo speaker seemed to play some notes louder than others.
+Second, I looked at the memory map for my program and it seems my bit
+packing scheme worked well--there was plenty of additional room for
+more songs.
+
+A photo of my music trainer and its memory map are shown in
+\hyperref[the-music-trainer]{figure \ref{the-music-trainer}} and
+\hyperref[memory-map]{figure \ref{memory-map}}.
+
+\begin{figure}
 \centering
 \includegraphics[width=0.6\textwidth]{the-music-trainer.jpg}
 \caption{My Music Trainer Playing The Final Countdown}
 \label{the-music-trainer}
 \end{figure}
 
-\begin{figure}[h!]
+\begin{figure}
 \centering
 \includegraphics[width=\textwidth]{memory-map.png}
 \caption{EEPROM Memory Mapping with Six Songs}
@@ -274,7 +303,18 @@ see notes displayed on the 7-segment display and octave LEDs.
 
 \section{Discussion}
 
+\subsection{Discussion}
+
+Microcontrollers can easily be used to generate simple tones with
+pulse width modulation on digital I/O pins.
+Simple songs such as the original cell phone ring tones can be played
+as long as more than a single tone at any moment is not required.
+(Actually you could play more tones at once with additional pins
+and a lower level language).
+
 \section{Exercises}
+
+There were no exercises for this lab.
 
 \clearpage
 
