@@ -61,9 +61,10 @@ Furthermore, display the note's octave with individual LEDs.
 \end{enumerate}
 
 \section{Procedure}
+
 \subsection{Circuit Design}
 
-\begin{figure}[h!]
+\begin{figure}
 \centering
 	\begin{subfigure}[b]{.2\textwidth}
 		\centering
@@ -95,6 +96,36 @@ Furthermore, display the note's octave with individual LEDs.
 	\caption{Hardware for The Last Music Trainer}
 	\label{circuit-diagrams}
 \end{figure}
+
+Objectives 1-4 from the problem specifications (\hyperref[problem-specs]{section \ref{problem-specs}})
+each require some hardware for their functionality.
+Playing simple songs requires a piezo element, user song selection requires a pushbutton,
+adjusting the base tempo requires a rotary potentiometer knob, and
+displaying the current note requires a 7-segment display.
+
+The circuit diagram for these 4 hardware sections are shown in
+\hyperref[circuit-diagrams]{figure \ref{circuit-diagrams}}. 
+
+For the pushbutton circuit, a capacitor is added in parallel to the switch;
+if the capacitor is charged immediately after reading the pin, this capacitive
+switch will have memory in case the switch is contacted while the controller
+is busy.
+
+For the rotary potentiometer, the RC time constant was found in a prior lab to be
+\begin{equation}
+\tau = \left[ \frac{0.06365R_{pot}}{\Omega}+636.5 \right] *[2\mu s]
+\end{equation}
+
+The time constant is given in units of 2 $\mu$s because that is the measurement
+unit of the PBasic Stamp controller. The potentiometer resistance has a domain
+of 0 $\Omega$-10 k$\Omega$, resulting in an expected range of 636.5-1273.
+The and the range needs to be mapped linearly to a
+speed factor of 1--4 and, from experience in the last lab, there should be built in
+tolerance in case the time measurement is outside the expected range.
+This can be done with the mapping
+\begin{equation}
+y=\frac{1}{256}\left( \frac{\tau}{[2\mu s]}-443 \right) +1
+\end{equation}
 
 \subsection{Data Design}
 
