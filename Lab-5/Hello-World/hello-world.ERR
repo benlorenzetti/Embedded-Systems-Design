@@ -1,5 +1,1 @@
-Error[113]   /home/ben/Documents/Embedded-Systems-Design/Lab-5/Hello-World/hello-world.asm 18 : Symbol not previously defined (delay1)
-Error[113]   /home/ben/Documents/Embedded-Systems-Design/Lab-5/Hello-World/hello-world.asm 19 : Symbol not previously defined (delay2)
-Error[113]   /home/ben/Documents/Embedded-Systems-Design/Lab-5/Hello-World/hello-world.asm 21 : Symbol not previously defined (delay1)
-Error[113]   /home/ben/Documents/Embedded-Systems-Design/Lab-5/Hello-World/hello-world.asm 23 : Symbol not previously defined (dealy2)
 Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-5/Hello-World/hello-world.asm 29 : Register in operand not in bank 0.  Ensure that bank bits are correct.

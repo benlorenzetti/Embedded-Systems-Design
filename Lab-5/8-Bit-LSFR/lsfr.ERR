@@ -1,0 +1,5 @@
+Warning[205] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lsfr.asm 15 : Found directive in column 1. (cblock)
+Warning[205] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lsfr.asm 22 : Found directive in column 1. (ENDC)
+Warning[202] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lsfr.asm 46 : Argument out of range.  Least significant bits used.
+Warning[202] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lsfr.asm 51 : Argument out of range.  Least significant bits used.
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lsfr.asm 64 : Register in operand not in bank 0.  Ensure that bank bits are correct.
