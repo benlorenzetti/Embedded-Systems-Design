@@ -1,3 +1,1 @@
-Warning[202] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lsfr.asm 51 : Argument out of range.  Least significant bits used.
-Warning[202] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lsfr.asm 56 : Argument out of range.  Least significant bits used.
-Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lsfr.asm 83 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lsfr.asm 85 : Register in operand not in bank 0.  Ensure that bank bits are correct.

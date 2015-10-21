@@ -8,8 +8,8 @@
 
 ;-----------LFSR Bit/Byte Sizes, Tap Locations, and Initial Values------------;
 #define LSFR_SIZE 1		; LSFR byte size
-#define LSFR1_TAP_MASK	0x1D
-#define LSFR1_BIT_SIZE	8
+#define LSFR1_TAP_MASK	0x03
+#define LSFR1_BIT_SIZE	3
 #define INITIAL_VALUE	1
 
 
@@ -27,7 +27,7 @@
 	endc
 
 ;-----------------------Organize Program Memory---------------------;
-Reset_Vector
+Reset_Vector	CODE
 	ORG 0
 	GOTO Initialize
 
@@ -35,9 +35,9 @@ Interupt_Vector
 	ORG 4
 
 
-#define OUTER_MAX_PLUS_1 60
-#define MIDDLE_MAX_PLUS_1 30
-#define INNER_MAX_PLUS_1 30
+#define OUTER_MAX_PLUS_1 65
+#define MIDDLE_MAX_PLUS_1 126
+#define INNER_MAX_PLUS_1 126
 #define REMAINDER 1
 ;-------------------- void Pause_1_Second () -----------------------;
 Pause_1_Second
