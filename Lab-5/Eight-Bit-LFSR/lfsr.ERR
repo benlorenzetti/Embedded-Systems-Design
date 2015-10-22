@@ -1,0 +1,4 @@
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lfsr.asm 104 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Warning[207] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lfsr.asm 80 : Found label after column 1. (i)
+Warning[207] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lfsr.asm 40 : Found label after column 1. (i)
+Warning[207] /home/ben/Documents/Embedded-Systems-Design/Lab-5/8-Bit-LSFR/lfsr.asm 40 : Found label after column 1. (i)

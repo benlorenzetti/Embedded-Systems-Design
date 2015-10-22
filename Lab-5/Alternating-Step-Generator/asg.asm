@@ -1,4 +1,5 @@
-; Alternating Step Generator on PIC Development Board
+; asg.asm
+; 3-LFSR Alternating Step Generator on PIC Development Board
 ; Ben Lorenzetti
 ; Embedded Systems Design, Fall 2015
 
@@ -7,24 +8,10 @@
 	__CONFIG	_CONFIG2, _WRT_OFF & _BOR21V
 
 ;-----------LFSR Bit/Byte Sizes, Tap Locations, and Initial Values------------;
-#define LSFR_SIZE 1		; LSFR byte size
-#define LSFR1_TAP_MASK	0x1D
-#define LSFR1_BIT_SIZE	8
+#define LFSR_SIZE 1		; LFSR byte size
+#define LED_MASK	0x0F	; 0x07 for 3 bit LFSR, 0x0F for 4-bit LFSR, 0xFF for 8-bit LFSR
+#define LFSR1_TAP_MASK	0x0C	; 0x06 for 3-bit LFSR, 0x0C for 4-bit LFSR, 0xB8 for 8-bit LFSR
 #define INITIAL_VALUE	1
-
-
-;--------------------Allocate Static Variables----------------------;
-	cblock	0x20
-	OUTER_DELAY
-	MIDDLE_DELAY
-	INNER_DELAY
-	REMAINDER_DELAY
-	BYTE_INDEX
-	PROP_SIGNAL
-	COUNTER
-	LOCAL_LSFR: LSFR_SIZE
-	LSFR1: LSFR_SIZE
-	endc
 
 ;-----------------------Organize Program Memory---------------------;
 Reset_Vector
@@ -34,10 +21,30 @@ Reset_Vector
 Interupt_Vector
 	ORG 4
 
+;--------------------Allocate Static Variables----------------------;
+	cblock	0x20
+	OUTER_DELAY
+	MIDDLE_DELAY
+	INNER_DELAY
+	REMAINDER_DELAY
+	PROP_SIGNAL
+	BIT_INDEX
+	LOCAL_LFSR: LFSR_SIZE
+	LFSR1: LFSR_SIZE
+	endc
+
+;-------- void rotate_word_left (word*, word_size); ----------------;
+RLF_Word	MACRO	Word_Addr, Word_Size
+	local i = 0
+	while i < Word_Size
+	  RLF	(Word_Addr + i), 1
+	  i += 1
+	endw
+	ENDM
 
 #define OUTER_MAX_PLUS_1 60
-#define MIDDLE_MAX_PLUS_1 30
-#define INNER_MAX_PLUS_1 30
+#define MIDDLE_MAX_PLUS_1 40
+#define INNER_MAX_PLUS_1 40
 #define REMAINDER 1
 ;-------------------- void Pause_1_Second () -----------------------;
 Pause_1_Second
@@ -64,18 +71,31 @@ Remainder_Loop
 	RETURN
  
 ;------------Linear XOR Cascade Function----------------------------;
-Linear_Function
-	CLRF	PROP_SIGNAL
-Propagation_Loop
-	RRF	LOCAL_LSFR, 1	; shift LSFR right, ie pop off lowest bit
-	MOVFW	STATUS		; get status register for its carry bit
+Linear_Xor_Function	MACRO	LFS_Register, Reg_Size, Tap_Mask
+	;------ Pass the function arguments by Copy---------- ------;
+	local i = 0
+	while i < LFSR_SIZE
+	 MOVFW	(LFS_Register + i)	; copy the LSFR to accumulator
+	 ANDLW	(Tap_Mask + i)		; AND accum. copy with TAP_MASK
+	 MOVWF	(LOCAL_LFSR + i) 	; move from accum. to local function variable
+	 i += 1
+	endw
+	;----------- Initialize Local Variables --------------------;
+	CLRF	PROP_SIGNAL		; initialize XOR signal to 0
+	MOVLW	(8 * Reg_Size)		; start XOR adding at most significat bit
+	BCF	STATUS, C		; set initial XOR add input to 0
+Xor_Propagation_Loop
+	;----------- rotate 1 bit from local copy of LSFR ----------;
+	RLF_Word	LOCAL_LFSR, LFSR_SIZE
+	;----------- Add Carry Bit to PROP_SIGNAL ------------------;
+	MOVFW	STATUS		; get status register for the carry bit
 	ANDLW	1		; keep only the carry bit
-	ADDWF	PROP_SIGNAL, 1	; add carry bit to propagation signal
-	DECFSZ	COUNTER, 1	; decrement counter and break if zero
-	GOTO	Propagation_Loop
-	MOVLW	1		; move 1s bit mast into W
-	ANDWF	PROP_SIGNAL, 1	; return only 1s bit of prop_signal
-	RETURN
+	ADDWF	PROP_SIGNAL, 1	; add carry bit to prop signal
+	DECFSZ	BIT_INDEX, 1	; break loop after all bits propagated
+	GOTO	Xor_Propagation_Loop
+;-------Return (1s-Digit of PROP_SIGNAL) via Carry Flag ------------;
+	RRF	PROP_SIGNAL, 1
+	ENDM
 
 
 ;-------------------Initialize Data Memory--------------------------;
@@ -86,35 +106,18 @@ Initialize
 	BANKSEL PORTD		; back to Register Bank 0
 	;-----------Initialize LSFRs--------------------------------;
 	MOVLW	INITIAL_VALUE
-	MOVWF	LSFR1
+	MOVWF	LFSR1
 
 ;---------------Begin Main Program Loop-----------------------------;
 Main
 	;-------------Update LED Display----------------------------;
-	MOVFW	LSFR1
+	MOVFW	LFSR1
+	ANDLW	LED_MASK
 	MOVWF	PORTD
-	;---------Clock LSFR: Copy Parameters Prior to Function Call----------;
-	MOVLW	LSFR1_TAP_MASK
-	ANDWF	LSFR1, 0	; AND LSFR1 with its TAP_MASK and store in W
-	MOVWF	LOCAL_LSFR	; make local copy for function
-	MOVLW	LSFR1_BIT_SIZE
-	MOVWF	COUNTER		; pass LSFR bit size by copy
-	;---------Clock LSFR: Call Linear XOR Function -----------------------;
-	CALL	Linear_Function
-	;---------Clock LSFR: Shift the LSFR----------------------------------;
-	BCF	STATUS, C
-	RRF	LSFR1, 1
-	;---------Clock LSFR: Add in XOR Feedback Signal----------------------;
-	MOVLW	LSFR1_BIT_SIZE - 1 + (LSFR_SIZE - 1)
-		; rotate bit size -1, but need to add one carry cycle for each byte
-	MOVWF	COUNTER		; set counter to number of bits in LSFR
-	BCF	STATUS, C	; dont want to rotate a 1 into PROP_SIGNAL
-Bit_Shift_Loop
-	RLF	PROP_SIGNAL, 1	; left shift PROP_SIGNAL
-	DECFSZ	COUNTER, 1
-	GOTO	Bit_Shift_Loop	; repeat LSFR_BIT_SIZE times
-	MOVFW	PROP_SIGNAL	; propagation bit now matches highest order bit of LSFR
-	ADDWF	LSFR1, 1	; add propagation feedback bit to LSFR
+	;-------------------Cycle LSFR -----------------------------;
+	Linear_Xor_Function	LFSR1, LFSR_SIZE, LFSR1_TAP_MASK
+		; return value is in the Carry Flag
+	RLF_Word	LFSR1, LFSR_SIZE	; shift LSFR with feedback from STATUS, C
 	;---------------Delay 1 Second-----------------------------;
 	CALL	Pause_1_Second
 	GOTO	Main
