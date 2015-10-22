@@ -65,7 +65,7 @@ Users Manual. The PIC16F877 datasheet was also useful since the PDF is searchabl
 A linear--feedback shift register (LFSR) is a shift register whose input is a linear,
 real time function of its current state.
 
-Usually the linear function is a cascade of XOR gates that "tap" some of the upper
+Usually the linear function is a cascade of XOR gates that ``tap'' some of the upper
 order bits on the LFSR. The tapped bits are know as the feedback polynomial for the
 LFSR. If the feedback function is constructed as a cascade of XOR gates, the LFSR
 is known as a Fibonacci LFSR. An example of a 14--bit Fibonacci LFSR is shown 
@@ -78,7 +78,7 @@ in figure \ref{14-bit-fibonacci-with-feedback-polynomial}.
 \end{center}
 
 LFSRs are often used as pseudorandom number generators and the initial value is know
-as the "seed" value. For Fibonacci LFSRs, a seed value of zero will cause the LFSR
+as the ``seed'' value. For Fibonacci LFSRs, a seed value of zero will cause the LFSR
 to be forever stuck in the zero state.
 
 If the feedback polynomial is chosen correctly, the LFSR can produce $2^{n}-1$
@@ -126,29 +126,24 @@ whatever the word size of the machine may be.
 
 Luckily, the PIC instruction set has rotate left and rotate right instructions
 which can shift bits in and out of a byte like a queue. Nine bits are involved,
-eight bits from the byte being rotated and a ninth bit--the carry flag from
-the status register. The carry flag is set by many ALU operations but, in the case
+eight bits from the byte being rotated and a ninth bit---the carry flag from
+the status register. The \texttt{STATUS, C} flag is set by many ALU operations but, in the case
 of rotate left and rotart right, the value in the Carry Flag is shifted into
 the byte and is replaced by the value shifting out the other side of the byte queue.
-The mnemonics for rotate left and rotate right are
+The assembler mnemonics for rotate left and rotate right are:
 \begin{verbatim}
-	RLF	f, d
-	RRF	f, d
+  RLF  f, d  ; f is address of the operand value and d is result destination
+  RRF  f, d  ; d=1 stores result back at ADDR f, d=0 stores result in W
 \end{verbatim}
-where \texttt{f} is the register address and \texttt{d=0} indicates store in
-the accumulator \texttt{W} and \texttt{d=1} indicates replace at the \texttt{f} address.
 
-My design for a generic bit-length LFSR takes takes advantage of the rotate instructions.
-A hardware concept is shown in figure \ref{fibonacci-equivalent-circuit}. This
-arrangement of hardware is better for implementable in software because there are fewer
+My design for a generic length LFSR takes takes advantage of these rotate instructions.
+The hardware concept for my design is shown in figure \ref{fibonacci-equivalent-circuit}.
+This arrangement of hardware lends itself to implementable in software because there are few
 conditional statements; the XOR cascade can be implemented as a loop instead of
 a unique--per--feedback--polynomial sequence of logic statements. Also, instead of
-trying to arrange bits to overlap for \texttt{XOR} ALU operations, it uses the ALU
-to add 1s Digit signals with an effect equivalent to XORing if you ignore the higher order bits.
-
-Since LFSRs are easily visuallized as hardware, a flowchart for the XOR function
-implementation is similarly drawn in figure \ref{xor-propagation-flowchart}.
-This flowchart shows the value of the PIC architecture's Carry Flag for implementing an LFSR.
+trying to arrange bits to overlap for \texttt{XOR} operations, it propagates the
+XOR signal in the 1's Digit of a register with repeated addition of \texttt{0} or \texttt{1}.
+This has an effect equivalent to XORing if you ignore the higher order bits.
 
 \begin{figure}
 	\centering
@@ -157,10 +152,9 @@ This flowchart shows the value of the PIC architecture's Carry Flag for implemen
 	\label{xor-propagation-flowchart}
 \end{figure}
 
-The full process of advancing to the next state in the LFSR sequence involves
-calculating the result of the linear XOR function and then shifting the register
-by 1--bit with the XOR result as input. This is shown in the implementation
-flowchart in figure \ref{cycle-lfsr-flowchart}.
+Since LFSRs are easily visuallized as hardware, a flowchart for the XOR function
+implementation is similarly drawn in figure \ref{xor-propagation-flowchart}.
+This flowchart shows the value of the PIC architecture's Carry Flag for implementing an LFSR.
 
 \begin{figure}
 	\centering
@@ -169,6 +163,10 @@ flowchart in figure \ref{cycle-lfsr-flowchart}.
 	\label{cycle-lfsr-flowchart}
 \end{figure}
 
+The full process of advancing to the next state in the LFSR sequence involves
+calculating the result of the linear XOR function and then shifting the LFS register
+by 1--bit with the XOR result as input. This is shown in the implementation
+flowchart in figure \ref{cycle-lfsr-flowchart}.
 \subsection{Hello World Program (Delay Function)}
 
 \subsection{Assembly Macros (Rotate Word Function)}
