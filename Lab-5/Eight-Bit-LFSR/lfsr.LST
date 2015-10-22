@@ -1,4 +1,4 @@
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  1
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -26,8 +26,8 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00009 
                       00010 ;-----------LFSR Bit/Byte Sizes, Tap Locations, and Initial Values------------;
                       00011 #define LFSR_SIZE 1             ; LFSR byte size
-                      00012 #define LED_MASK        0x07    ; 0x07 for 3 bit LFSR, 0x0F for 4-bit LFSR, 0xFF for 8-bit LFSR
-                      00013 #define LFSR1_TAP_MASK  0x06    ; 0x06 for 3-bit LFSR, 0x0C for 4-bit LFSR, 0xB8 for 8-bit LFSR
+                      00012 #define LED_MASK        0xFF    ; 0x07 for 3 bit LFSR, 0x0F for 4-bit LFSR, 0xFF for 8-bit LFSR
+                      00013 #define LFSR1_TAP_MASK  0xB8    ; 0x06 for 3-bit LFSR, 0x0C for 4-bit LFSR, 0xB8 for 8-bit LFSR
                       00014 #define INITIAL_VALUE   1
                       00015 
                       00016 ;-----------------------Organize Program Memory---------------------;
@@ -57,7 +57,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00040           RLF   (Word_Addr + i), 1
                       00041           i += 1
                       00042         endw
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  2
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -116,7 +116,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00093         ADDWF   PROP_SIGNAL, 1  ; add carry bit to prop signal
                       00094         DECFSZ  BIT_INDEX, 1    ; break loop after all bits propagated
                       00095         GOTO    Xor_Propagation_Loop
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  3
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -142,7 +142,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
 001C                  00112 Main
                       00113         ;-------------Update LED Display----------------------------;
 001C   0827           00114         MOVFW   LFSR1
-001D   3907           00115         ANDLW   LED_MASK
+001D   39FF           00115         ANDLW   LED_MASK
 001E   0088           00116         MOVWF   PORTD
                       00117         ;-------------------Cycle LSFR -----------------------------;
                       00118         Linear_Xor_Function     LFSR1, LFSR_SIZE, LFSR1_TAP_MASK
@@ -150,7 +150,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
   0000                    M         local i = 0
                           M         while i < LFSR_SIZE
 001F   0827               M          MOVFW  (LFSR1        + i)      ; copy the LSFR to accumulator
-0020   3906               M          ANDLW  (0x06     + i)          ; AND accum. copy with TAP_MASK
+0020   39B8               M          ANDLW  (0xB8     + i)          ; AND accum. copy with TAP_MASK
 0021   00A6               M          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
 Warning[207]: Found label after column 1. (i)
   00000001                M          i += 1
@@ -175,7 +175,7 @@ Warning[207]: Found label after column 1. (i)
 0029   0BA5               M         DECFSZ  BIT_INDEX, 1    ; break loop after all bits propagated
 002A   2825               M         GOTO    Xor_Propagation_Loop
                           M ;-------Return (1s-Digit of PROP_SIGNAL) via Carry Flag ------------;
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  4
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -195,7 +195,7 @@ Warning[207]: Found label after column 1. (i)
 002E   281C           00123         GOTO    Main
                       00124 
                       00125         END
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  5
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE  5
 
 
 SYMBOL TABLE
@@ -254,7 +254,7 @@ BRG5                              00000005
 BRG6                              00000006
 BRG7                              00000007
 BRG8                              00000000
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  6
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE  6
 
 
 SYMBOL TABLE
@@ -313,7 +313,7 @@ CCPR2L                            0000001B
 CHS0                              00000002
 CHS1                              00000003
 CHS2                              00000004
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  7
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE  7
 
 
 SYMBOL TABLE
@@ -372,7 +372,7 @@ INNER_MAX_PLUS_1                  40
 INTCON                            0000000B
 INTE                              00000004
 INTEDG                            00000006
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  8
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE  8
 
 
 SYMBOL TABLE
@@ -395,9 +395,9 @@ IRP                               00000007
 Initialize                        00000015
 Inner_Loop                        00000008
 Interupt_Vector                   00000001
-LED_MASK                          0x07
+LED_MASK                          0xFF
 LFSR1                             00000027
-LFSR1_TAP_MASK                    0x06
+LFSR1_TAP_MASK                    0xB8
 LFSR_SIZE                         1
 LOCAL_LFSR                        00000026
 LTS                               00000001
@@ -431,7 +431,7 @@ NOT_TO                            00000004
 NOT_TX8                           00000006
 NOT_W                             00000002
 NOT_WRITE                         00000002
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  9
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE  9
 
 
 SYMBOL TABLE
@@ -490,7 +490,7 @@ Pause_1_Second                    00000004
 R                                 00000002
 RA0                               00000000
 RA1                               00000001
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 10
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE 10
 
 
 SYMBOL TABLE
@@ -549,7 +549,7 @@ RLF_Word
 RP0                               00000005
 RP1                               00000006
 RSEN                              00000001
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 11
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE 11
 
 
 SYMBOL TABLE
@@ -608,7 +608,7 @@ T1GINV                            00000007
 T1GIV                             00000007
 T1GSS                             00000001
 T1INSYNC                          00000002
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 12
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE 12
 
 
 SYMBOL TABLE
@@ -667,7 +667,7 @@ TRISC6                            00000006
 TRISC7                            00000007
 TRISD                             00000088
 TRISD0                            00000000
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 13
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE 13
 
 
 SYMBOL TABLE
@@ -726,7 +726,7 @@ WPUB                              00000095
 WPUB0                             00000000
 WPUB1                             00000001
 WPUB2                             00000002
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 14
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE 14
 
 
 SYMBOL TABLE
@@ -785,7 +785,7 @@ _IDLOC1                           00002001
 _IDLOC2                           00002002
 _IDLOC3                           00002003
 _IESO_OFF                         00003BFF
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 15
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:27:19         PAGE 15
 
 
 SYMBOL TABLE
