@@ -1,11 +1,11 @@
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  1
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00001 ; lfsr.asm
-                      00002 ; 8-Bit Linear Feedback Shift Register on PIC Development Board
+                      00001 ; asg.asm
+                      00002 ; 3-LFSR Alternating Step Generator on PIC Development Board
                       00003 ; Ben Lorenzetti
                       00004 ; Embedded Systems Design, Fall 2015
                       00005 
@@ -25,177 +25,328 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 2008   3EFF           00008         __CONFIG        _CONFIG2, _WRT_OFF & _BOR21V
                       00009 
                       00010 ;-----------LFSR Bit/Byte Sizes, Tap Locations, and Initial Values------------;
-                      00011 #define LFSR_SIZE 1             ; LFSR byte size
-                      00012 #define LED_MASK        0x07    ; 0x07 for 3 bit LFSR, 0x0F for 4-bit LFSR, 0xFF for 8-bit LFSR
-                      00013 #define LFSR1_TAP_MASK  0x06    ; 0x06 for 3-bit LFSR, 0x0C for 4-bit LFSR, 0xB8 for 8-bit LFSR
-                      00014 #define INITIAL_VALUE   1
-                      00015 
-                      00016 ;-----------------------Organize Program Memory---------------------;
-0000                  00017 Reset_Vector
-0000                  00018         ORG 0
-0000   2815           00019         GOTO Initialize
-                      00020 
-0001                  00021 Interupt_Vector
-0004                  00022         ORG 4
-                      00023 
-                      00024 ;--------------------Allocate Static Variables----------------------;
-                      00025         cblock  0x20
-  00000020            00026         OUTER_DELAY
-  00000021            00027         MIDDLE_DELAY
-  00000022            00028         INNER_DELAY
-  00000023            00029         REMAINDER_DELAY
-  00000024            00030         PROP_SIGNAL
-  00000025            00031         BIT_INDEX
-  00000026            00032         LOCAL_LFSR: LFSR_SIZE
-  00000027            00033         LFSR1: LFSR_SIZE
-                      00034         endc
-                      00035 
-                      00036 ;-------- void rotate_word_left (word*, word_size); ----------------;
-                      00037 RLF_Word        MACRO   Word_Addr, Word_Size
-                      00038         local i = 0
-                      00039         while i < Word_Size
-                      00040           RLF   (Word_Addr + i), 1
-                      00041           i += 1
-                      00042         endw
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  2
+                      00011 #define LFSR_SIZE 2             ; LFSR byte size
+                      00012 #define LFSR0_TAP_MASK0 0x02    ; 14-bit LFSR lower byte tap mask
+                      00013 #define LFSR0_TAP_MASK1 0x38    ;   the high byte tap mask
+                      00014 #define LFSR1_TAP_MASK0 0x00    ; 15-bit LFSR lower byte tap mask
+                      00015 #define LFSR1_TAP_MASK1 0x60    ;   the low byte tap mask
+                      00016 #define LFSR2_TAP_MASK0 0x00    ; 16-bit LFSR lower byte tap mask
+                      00017 #define LFSR2_TAP_MASK1 0xB4    ;   the lower byte of tap mask
+                      00018 #define INITIAL_VALUE   1
+                      00019 
+                      00020 ;-----------------------Organize Program Memory---------------------;
+0000                  00021 Reset_Vector
+0000                  00022         ORG 0
+0000   2815           00023         GOTO Initialize
+                      00024 
+0001                  00025 Interupt_Vector
+0004                  00026         ORG 4
+                      00027 
+                      00028 ;--------------------Allocate Static Variables----------------------;
+                      00029         cblock  0x20
+  00000020            00030         OUTER_DELAY
+  00000021            00031         MIDDLE_DELAY
+  00000022            00032         INNER_DELAY
+  00000023            00033         REMAINDER_DELAY
+  00000024            00034         PROP_SIGNAL
+  00000025            00035         BIT_INDEX
+  00000026            00036         ASG
+  00000027            00037         COUNTER
+  00000028            00038         LOCAL_LFSR: LFSR_SIZE
+  0000002A            00039         LFSR0: LFSR_SIZE
+  0000002C            00040         LFSR1: LFSR_SIZE
+  0000002E            00041         LFSR2: LFSR_SIZE
+                      00042         endc
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00043         ENDM
-                      00044 
-                      00045 #define OUTER_MAX_PLUS_1 60
-                      00046 #define MIDDLE_MAX_PLUS_1 40
-                      00047 #define INNER_MAX_PLUS_1 40
-                      00048 #define REMAINDER 1
-                      00049 ;-------------------- void Pause_1_Second () -----------------------;
-0004                  00050 Pause_1_Second
-0004   3060           00051         MOVLW   OUTER_MAX_PLUS_1
-0005   00A0           00052         MOVWF   OUTER_DELAY
-0006   3001           00053         MOVLW   REMAINDER
-0007   00A3           00054         MOVWF   REMAINDER_DELAY
-0008                  00055 Inner_Loop
-0008   0BA2           00056         DECFSZ  INNER_DELAY, f
-0009   2808           00057         GOTO    Inner_Loop
-000A   3040           00058         MOVLW   INNER_MAX_PLUS_1
-000B   00A2           00059         MOVWF   INNER_DELAY
-000C                  00060 Middle_Loop
-000C   0BA1           00061         DECFSZ  MIDDLE_DELAY, f
-000D   2808           00062         GOTO    Inner_Loop
-000E   3040           00063         MOVLW   MIDDLE_MAX_PLUS_1
-000F   00A1           00064         MOVWF   MIDDLE_DELAY
-0010                  00065 Outer_Loop
-0010   0BA0           00066         DECFSZ  OUTER_DELAY, f
-0011   2808           00067         GOTO    Inner_Loop
-0012                  00068 Remainder_Loop
-0012   0BA3           00069         DECFSZ  REMAINDER_DELAY, f
-0013   2812           00070         GOTO    Remainder_Loop
-0014   0008           00071         RETURN
-                      00072  
-                      00073 ;------------Linear XOR Cascade Function----------------------------;
-                      00074 Linear_Xor_Function     MACRO   LFS_Register, Reg_Size, Tap_Mask
-                      00075         ;------ Pass the function arguments by Copy---------- ------;
-                      00076         local i = 0
-                      00077         while i < LFSR_SIZE
-                      00078          MOVFW  (LFS_Register + i)      ; copy the LSFR to accumulator
-                      00079          ANDLW  (Tap_Mask + i)          ; AND accum. copy with TAP_MASK
-                      00080          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
-                      00081          i += 1
-                      00082         endw
-                      00083         ;----------- Initialize Local Variables --------------------;
-                      00084         CLRF    PROP_SIGNAL             ; initialize XOR signal to 0
-                      00085         MOVLW   (8 * Reg_Size)          ; start XOR adding at most significat bit
-                      00086         BCF     STATUS, C               ; set initial XOR add input to 0
-                      00087 Xor_Propagation_Loop
-                      00088         ;----------- rotate 1 bit from local copy of LSFR ----------;
-                      00089         RLF_Word        LOCAL_LFSR, LFSR_SIZE
-                      00090         ;----------- Add Carry Bit to PROP_SIGNAL ------------------;
-                      00091         MOVFW   STATUS          ; get status register for the carry bit
-                      00092         ANDLW   1               ; keep only the carry bit
-                      00093         ADDWF   PROP_SIGNAL, 1  ; add carry bit to prop signal
-                      00094         DECFSZ  BIT_INDEX, 1    ; break loop after all bits propagated
-                      00095         GOTO    Xor_Propagation_Loop
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  3
+                      00043 
+                      00044 ;-------- void rotate_word_left (word*, word_size); ----------------;
+                      00045 RLF_Word        MACRO   Word_Addr, Word_Size
+                      00046         local i = 0
+                      00047         while i < Word_Size
+                      00048           RLF   (Word_Addr + i), 1
+                      00049           i += 1
+                      00050         endw
+                      00051         ENDM
+                      00052 
+                      00053 #define OUTER_MAX_PLUS_1 60
+                      00054 #define MIDDLE_MAX_PLUS_1 40
+                      00055 #define INNER_MAX_PLUS_1 40
+                      00056 #define REMAINDER 1
+                      00057 ;-------------------- void Pause_1_Second () -----------------------;
+0004                  00058 Pause_1_Second
+0004   3060           00059         MOVLW   OUTER_MAX_PLUS_1
+0005   00A0           00060         MOVWF   OUTER_DELAY
+0006   3001           00061         MOVLW   REMAINDER
+0007   00A3           00062         MOVWF   REMAINDER_DELAY
+0008                  00063 Inner_Loop
+0008   0BA2           00064         DECFSZ  INNER_DELAY, f
+0009   2808           00065         GOTO    Inner_Loop
+000A   3040           00066         MOVLW   INNER_MAX_PLUS_1
+000B   00A2           00067         MOVWF   INNER_DELAY
+000C                  00068 Middle_Loop
+000C   0BA1           00069         DECFSZ  MIDDLE_DELAY, f
+000D   2808           00070         GOTO    Inner_Loop
+000E   3040           00071         MOVLW   MIDDLE_MAX_PLUS_1
+000F   00A1           00072         MOVWF   MIDDLE_DELAY
+0010                  00073 Outer_Loop
+0010   0BA0           00074         DECFSZ  OUTER_DELAY, f
+0011   2808           00075         GOTO    Inner_Loop
+0012                  00076 Remainder_Loop
+0012   0BA3           00077         DECFSZ  REMAINDER_DELAY, f
+0013   2812           00078         GOTO    Remainder_Loop
+0014   0008           00079         RETURN
+                      00080  
+                      00081 ;------------Linear XOR Cascade Function----------------------------;
+                      00082 Linear_Xor_Function     MACRO   LFS_Register, Reg_Size, Tap_Mask
+                      00083         ;------ Pass the function arguments by Copy---------- ------;
+                      00084         local i = 0
+                      00085         while i < LFSR_SIZE
+                      00086          MOVFW  (LFS_Register + i)      ; copy the LSFR to accumulator
+                      00087          ANDLW  Tap_Mask#v(i)           ; AND accum. copy with TAP_MASK
+                      00088          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
+                      00089          i += 1
+                      00090         endw
+                      00091         ;----------- Initialize Local Variables --------------------;
+                      00092         CLRF    PROP_SIGNAL             ; initialize XOR signal to 0
+                      00093         MOVLW   (8 * Reg_Size)          ; start XOR adding at most significat bit
+                      00094         BCF     STATUS, C               ; set initial XOR add input to 0
+                      00095 Xor_Propagation_Loop#v(LFS_Register)
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00096 ;-------Return (1s-Digit of PROP_SIGNAL) via Carry Flag ------------;
-                      00097         RRF     PROP_SIGNAL, 1
-                      00098         ENDM
-                      00099 
-                      00100 
-                      00101 ;-------------------Initialize Data Memory--------------------------;
-0015                  00102 Initialize
-                      00103         ;---------- Initialize I/O
-0015   1683 1303      00104         BANKSEL TRISD           ; select Register Bank 1
+                      00096         ;----------- rotate 1 bit from local copy of LSFR ----------;
+                      00097         RLF_Word        LOCAL_LFSR, LFSR_SIZE
+                      00098         ;----------- Add Carry Bit to PROP_SIGNAL ------------------;
+                      00099         MOVFW   STATUS          ; get status register for the carry bit
+                      00100         ANDLW   1               ; keep only the carry bit
+                      00101         ADDWF   PROP_SIGNAL, 1  ; add carry bit to prop signal
+                      00102         DECFSZ  BIT_INDEX, 1    ; break loop after all bits propagated
+                      00103         GOTO    Xor_Propagation_Loop#v(LFS_Register)
+                      00104 ;-------Return (1s-Digit of PROP_SIGNAL) via Carry Flag ------------;
+                      00105         RRF     PROP_SIGNAL, 1
+                      00106         ENDM
+                      00107 
+                      00108 ;-------------------Initialize Data Memory--------------------------;
+0015                  00109 Initialize
+                      00110         ;---------- Initialize I/O
+0015   1683 1303      00111         BANKSEL TRISD           ; select Register Bank 1
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0017   0188           00105         CLRF    TRISD           ; make Port D all output pins
-0018   1283 1303      00106         BANKSEL PORTD           ; back to Register Bank 0
-                      00107         ;-----------Initialize LSFRs--------------------------------;
-001A   3001           00108         MOVLW   INITIAL_VALUE
-001B   00A7           00109         MOVWF   LFSR1
-                      00110 
-                      00111 ;---------------Begin Main Program Loop-----------------------------;
-001C                  00112 Main
-                      00113         ;-------------Update LED Display----------------------------;
-001C   0827           00114         MOVFW   LFSR1
-001D   3907           00115         ANDLW   LED_MASK
-001E   0088           00116         MOVWF   PORTD
-                      00117         ;-------------------Cycle LSFR -----------------------------;
-                      00118         Linear_Xor_Function     LFSR1, LFSR_SIZE, LFSR1_TAP_MASK
+0017   0188           00112         CLRF    TRISD           ; make Port D all output pins
+0018   1283 1303      00113         BANKSEL PORTD           ; back to Register Bank 0
+001A   0188           00114         CLRF    PORTD
+                      00115         ;-----------Initialize Memory-------------------------------;
+001B   3001           00116         MOVLW   INITIAL_VALUE   ; initialize LFSRs to INITIAL_VALUE
+001C   00AA           00117         MOVWF   LFSR0
+001D   00AC           00118         MOVWF   LFSR1
+001E   00AE           00119         MOVWF   LFSR2
+001F   3008           00120         MOVLW   8               ; initialize COUNTER to 8
+0020   00A7           00121         MOVWF   COUNTER
+0021   01A6           00122         CLRF    ASG             ; initialize ASG to 0
+                      00123         
+                      00124 
+                      00125 ;---------------Begin Main Program Loop-----------------------------;
+0022                  00126 Main
+                      00127         ;-----------------Cycle LFSR2-------------------------------;
+                      00128         Linear_Xor_Function     LFSR2, LFSR_SIZE, LFSR2_TAP_MASK
                           M         ;------ Pass the function arguments by Copy---------- ------;
   0000                    M         local i = 0
                           M         while i < LFSR_SIZE
-001F   0827               M          MOVFW  (LFSR1        + i)      ; copy the LSFR to accumulator
-0020   3906               M          ANDLW  (0x06     + i)          ; AND accum. copy with TAP_MASK
-0021   00A6               M          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
+0022   082E               M          MOVFW  (LFSR2        + i)      ; copy the LSFR to accumulator
+0023   3900               M          ANDLW  LFSR2_TAP_MASK0         ; AND accum. copy with TAP_MASK
+0024   00A8               M          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
 Warning[207]: Found label after column 1. (i)
   00000001                M          i += 1
+0025   082F               M          MOVFW  (LFSR2        + i)      ; copy the LSFR to accumulator
+0026   39B4               M          ANDLW  LFSR2_TAP_MASK1         ; AND accum. copy with TAP_MASK
+0027   00A9               M          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
+Warning[207]: Found label after column 1. (i)
+  00000002                M          i += 1
                           M         endw
                           M         ;----------- Initialize Local Variables --------------------;
-0022   01A4               M         CLRF    PROP_SIGNAL             ; initialize XOR signal to 0
-0023   3008               M         MOVLW   (8 * 1)                 ; start XOR adding at most significat bit
-0024   1003               M         BCF     STATUS, C               ; set initial XOR add input to 0
-0025                      M Xor_Propagation_Loop
-                          M         ;----------- rotate 1 bit from local copy of LSFR ----------;
-                          M         RLF_Word        LOCAL_LFSR, LFSR_SIZE
-  0000                    M         local i = 0
-                          M         while i < 1
-0025   0DA6               M           RLF   (LOCAL_LFSR + i), 1
-Warning[207]: Found label after column 1. (i)
-  00000001                M           i += 1
-                          M         endw
-                          M         ;----------- Add Carry Bit to PROP_SIGNAL ------------------;
-0026   0803               M         MOVFW   STATUS          ; get status register for the carry bit
-0027   3901               M         ANDLW   1               ; keep only the carry bit
-0028   07A4               M         ADDWF   PROP_SIGNAL, 1  ; add carry bit to prop signal
-0029   0BA5               M         DECFSZ  BIT_INDEX, 1    ; break loop after all bits propagated
-002A   2825               M         GOTO    Xor_Propagation_Loop
-                          M ;-------Return (1s-Digit of PROP_SIGNAL) via Carry Flag ------------;
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  4
+0028   01A4               M         CLRF    PROP_SIGNAL             ; initialize XOR signal to 0
+0029   3010               M         MOVLW   (8 * 2)                 ; start XOR adding at most significat bit
+002A   1003               M         BCF     STATUS, C               ; set initial XOR add input to 0
+002B                      M Xor_Propagation_Loop46
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-002B   0CA4               M         RRF     PROP_SIGNAL, 1
-                      00119                 ; return value is in the Carry Flag
-                      00120         RLF_Word        LFSR1, LFSR_SIZE        ; shift LSFR with feedback from STATUS, C
+                          M         ;----------- rotate 1 bit from local copy of LSFR ----------;
+                          M         RLF_Word        LOCAL_LFSR, LFSR_SIZE
   0000                    M         local i = 0
-                          M         while i < 1
-002C   0DA7               M           RLF   (LFSR1     + i), 1
+                          M         while i < 2
+002B   0DA8               M           RLF   (LOCAL_LFSR + i), 1
 Warning[207]: Found label after column 1. (i)
   00000001                M           i += 1
+002C   0DA9               M           RLF   (LOCAL_LFSR + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000002                M           i += 1
                           M         endw
-                      00121         ;---------------Delay 1 Second-----------------------------;
-002D   2004           00122         CALL    Pause_1_Second
-002E   281C           00123         GOTO    Main
-                      00124 
-                      00125         END
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  5
+                          M         ;----------- Add Carry Bit to PROP_SIGNAL ------------------;
+002D   0803               M         MOVFW   STATUS          ; get status register for the carry bit
+002E   3901               M         ANDLW   1               ; keep only the carry bit
+002F   07A4               M         ADDWF   PROP_SIGNAL, 1  ; add carry bit to prop signal
+0030   0BA5               M         DECFSZ  BIT_INDEX, 1    ; break loop after all bits propagated
+0031   282B               M         GOTO    Xor_Propagation_Loop46
+                          M ;-------Return (1s-Digit of PROP_SIGNAL) via Carry Flag ------------;
+0032   0CA4               M         RRF     PROP_SIGNAL, 1
+                      00129         RLF_Word        LFSR2, LFSR_SIZE
+  0000                    M         local i = 0
+                          M         while i < 2
+0033   0DAE               M           RLF   (LFSR2     + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000001                M           i += 1
+0034   0DAF               M           RLF   (LFSR2     + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000002                M           i += 1
+                          M         endw
+                      00130         ;---------Test Carry Bit and Cycle Appropriate Register-----;
+0035   1C03           00131         BTFSS   STATUS, C       ; skip next instruction if Carry=1
+0036   2841           00132         GOTO    Cycle_LFSR0
+0037   2855           00133         GOTO    Cycle_LFSR1
+                      00134         ;-------------Rotate Result into ASG------------------------;
+0038                  00135 Rotate_C_Into_ASG
+0038   0DA6           00136         RLF     ASG, 1
+                      00137         ;----------------Decrement and Test Counter-----------------;
+0039   0BA7           00138         DECFSZ  COUNTER, 1      ; decrement counter, skip next if 0
+003A   2822           00139         GOTO    Main
+                      00140         ;----------Reset Counter, Update Display, & Delay-----------;
+003B   3008           00141         MOVLW   8
+003C   00A7           00142         MOVWF   COUNTER         ; set counter to 8
+003D   0826           00143         MOVFW   ASG
+003E   0088           00144         MOVWF   PORTD           ; write ASG to the LEDs
+003F   2004           00145         CALL    Pause_1_Second  ; pause remainder of 1 second
+                      00146         ;----------------End of Main Loop---------------------------;
+0040   2822           00147         GOTO    Main
+                      00148 
+                      00149 ;---------------Cycling of the two subjected LFSRs------------------;
+0041                  00150 Cycle_LFSR0
+                      00151         Linear_Xor_Function     LFSR0, LFSR_SIZE, LFSR0_TAP_MASK
+                          M         ;------ Pass the function arguments by Copy---------- ------;
+  0000                    M         local i = 0
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                          M         while i < LFSR_SIZE
+0041   082A               M          MOVFW  (LFSR0        + i)      ; copy the LSFR to accumulator
+0042   3902               M          ANDLW  LFSR0_TAP_MASK0         ; AND accum. copy with TAP_MASK
+0043   00A8               M          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
+Warning[207]: Found label after column 1. (i)
+  00000001                M          i += 1
+0044   082B               M          MOVFW  (LFSR0        + i)      ; copy the LSFR to accumulator
+0045   3938               M          ANDLW  LFSR0_TAP_MASK1         ; AND accum. copy with TAP_MASK
+0046   00A9               M          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
+Warning[207]: Found label after column 1. (i)
+  00000002                M          i += 1
+                          M         endw
+                          M         ;----------- Initialize Local Variables --------------------;
+0047   01A4               M         CLRF    PROP_SIGNAL             ; initialize XOR signal to 0
+0048   3010               M         MOVLW   (8 * 2)                 ; start XOR adding at most significat bit
+0049   1003               M         BCF     STATUS, C               ; set initial XOR add input to 0
+004A                      M Xor_Propagation_Loop42
+                          M         ;----------- rotate 1 bit from local copy of LSFR ----------;
+                          M         RLF_Word        LOCAL_LFSR, LFSR_SIZE
+  0000                    M         local i = 0
+                          M         while i < 2
+004A   0DA8               M           RLF   (LOCAL_LFSR + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000001                M           i += 1
+004B   0DA9               M           RLF   (LOCAL_LFSR + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000002                M           i += 1
+                          M         endw
+                          M         ;----------- Add Carry Bit to PROP_SIGNAL ------------------;
+004C   0803               M         MOVFW   STATUS          ; get status register for the carry bit
+004D   3901               M         ANDLW   1               ; keep only the carry bit
+004E   07A4               M         ADDWF   PROP_SIGNAL, 1  ; add carry bit to prop signal
+004F   0BA5               M         DECFSZ  BIT_INDEX, 1    ; break loop after all bits propagated
+0050   284A               M         GOTO    Xor_Propagation_Loop42
+                          M ;-------Return (1s-Digit of PROP_SIGNAL) via Carry Flag ------------;
+0051   0CA4               M         RRF     PROP_SIGNAL, 1
+                      00152         RLF_Word        LFSR0, LFSR_SIZE
+  0000                    M         local i = 0
+                          M         while i < 2
+0052   0DAA               M           RLF   (LFSR0     + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000001                M           i += 1
+0053   0DAB               M           RLF   (LFSR0     + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000002                M           i += 1
+                          M         endw
+0054   2838           00153         GOTO    Rotate_C_Into_ASG       ; return to main program
+0055                  00154 Cycle_LFSR1
+                      00155         Linear_Xor_Function     LFSR1, LFSR_SIZE, LFSR1_TAP_MASK
+                          M         ;------ Pass the function arguments by Copy---------- ------;
+  0000                    M         local i = 0
+                          M         while i < LFSR_SIZE
+0055   082C               M          MOVFW  (LFSR1        + i)      ; copy the LSFR to accumulator
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0056   3900               M          ANDLW  LFSR1_TAP_MASK0         ; AND accum. copy with TAP_MASK
+0057   00A8               M          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
+Warning[207]: Found label after column 1. (i)
+  00000001                M          i += 1
+0058   082D               M          MOVFW  (LFSR1        + i)      ; copy the LSFR to accumulator
+0059   3960               M          ANDLW  LFSR1_TAP_MASK1         ; AND accum. copy with TAP_MASK
+005A   00A9               M          MOVWF  (LOCAL_LFSR + i)        ; move from accum. to local function variable
+Warning[207]: Found label after column 1. (i)
+  00000002                M          i += 1
+                          M         endw
+                          M         ;----------- Initialize Local Variables --------------------;
+005B   01A4               M         CLRF    PROP_SIGNAL             ; initialize XOR signal to 0
+005C   3010               M         MOVLW   (8 * 2)                 ; start XOR adding at most significat bit
+005D   1003               M         BCF     STATUS, C               ; set initial XOR add input to 0
+005E                      M Xor_Propagation_Loop44
+                          M         ;----------- rotate 1 bit from local copy of LSFR ----------;
+                          M         RLF_Word        LOCAL_LFSR, LFSR_SIZE
+  0000                    M         local i = 0
+                          M         while i < 2
+005E   0DA8               M           RLF   (LOCAL_LFSR + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000001                M           i += 1
+005F   0DA9               M           RLF   (LOCAL_LFSR + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000002                M           i += 1
+                          M         endw
+                          M         ;----------- Add Carry Bit to PROP_SIGNAL ------------------;
+0060   0803               M         MOVFW   STATUS          ; get status register for the carry bit
+0061   3901               M         ANDLW   1               ; keep only the carry bit
+0062   07A4               M         ADDWF   PROP_SIGNAL, 1  ; add carry bit to prop signal
+0063   0BA5               M         DECFSZ  BIT_INDEX, 1    ; break loop after all bits propagated
+0064   285E               M         GOTO    Xor_Propagation_Loop44
+                          M ;-------Return (1s-Digit of PROP_SIGNAL) via Carry Flag ------------;
+0065   0CA4               M         RRF     PROP_SIGNAL, 1
+                      00156         RLF_Word        LFSR1, LFSR_SIZE
+  0000                    M         local i = 0
+                          M         while i < 2
+0066   0DAC               M           RLF   (LFSR1     + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000001                M           i += 1
+0067   0DAD               M           RLF   (LFSR1     + i), 1
+Warning[207]: Found label after column 1. (i)
+  00000002                M           i += 1
+                          M         endw
+0068   2838           00157         GOTO    Rotate_C_Into_ASG       ; return to main program
+                      00158 
+                      00159         END
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE  7
 
 
 SYMBOL TABLE
@@ -233,6 +384,7 @@ ANS8                              00000000
 ANS9                              00000001
 ANSEL                             00000188
 ANSELH                            00000189
+ASG                               00000026
 BAUDCTL                           00000187
 BCLIE                             00000003
 BCLIF                             00000003
@@ -253,13 +405,13 @@ BRG4                              00000004
 BRG5                              00000005
 BRG6                              00000006
 BRG7                              00000007
-BRG8                              00000000
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  6
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE  8
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+BRG8                              00000000
 BRG9                              00000001
 BRGH                              00000002
 C                                 00000000
@@ -312,21 +464,24 @@ CCPR2H                            0000001C
 CCPR2L                            0000001B
 CHS0                              00000002
 CHS1                              00000003
-CHS2                              00000004
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  7
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE  9
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+CHS2                              00000004
 CHS3                              00000005
 CKE                               00000006
 CKP                               00000004
 CM1CON0                           00000107
 CM2CON0                           00000108
 CM2CON1                           00000109
+COUNTER                           00000027
 CREN                              00000004
 CSRC                              00000007
+Cycle_LFSR0                       00000041
+Cycle_LFSR1                       00000055
 D                                 00000005
 DATA_ADDRESS                      00000005
 DC                                00000001
@@ -368,16 +523,16 @@ I2C_STOP                          00000004
 INDF                              00000000
 INITIAL_VALUE                     1
 INNER_DELAY                       00000022
-INNER_MAX_PLUS_1                  40
-INTCON                            0000000B
-INTE                              00000004
-INTEDG                            00000006
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  8
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE 10
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+INNER_MAX_PLUS_1                  40
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
 INTF                              00000001
 IOCB                              00000096
 IOCB0                             00000000
@@ -395,11 +550,17 @@ IRP                               00000007
 Initialize                        00000015
 Inner_Loop                        00000008
 Interupt_Vector                   00000001
-LED_MASK                          0x07
-LFSR1                             00000027
-LFSR1_TAP_MASK                    0x06
-LFSR_SIZE                         1
-LOCAL_LFSR                        00000026
+LFSR0                             0000002A
+LFSR0_TAP_MASK0                   0x02
+LFSR0_TAP_MASK1                   0x38
+LFSR1                             0000002C
+LFSR1_TAP_MASK0                   0x00
+LFSR1_TAP_MASK1                   0x60
+LFSR2                             0000002E
+LFSR2_TAP_MASK0                   0x00
+LFSR2_TAP_MASK1                   0xB4
+LFSR_SIZE                         2
+LOCAL_LFSR                        00000028
 LTS                               00000001
 Linear_Xor_Function               
 MC1OUT                            00000007
@@ -415,12 +576,18 @@ MSK4                              00000004
 MSK5                              00000005
 MSK6                              00000006
 MSK7                              00000007
-Main                              0000001C
+Main                              00000022
 Middle_Loop                       0000000C
 NOT_A                             00000005
 NOT_ADDRESS                       00000005
 NOT_BO                            00000000
 NOT_BOR                           00000000
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 NOT_DONE                          00000001
 NOT_PD                            00000003
 NOT_POR                           00000001
@@ -431,12 +598,6 @@ NOT_TO                            00000004
 NOT_TX8                           00000006
 NOT_W                             00000002
 NOT_WRITE                         00000002
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE  9
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 OERR                              00000001
 OPTION_REG                        00000081
 OSCCON                            0000008F
@@ -480,6 +641,12 @@ PS2                               00000002
 PSA                               00000003
 PSSAC0                            00000002
 PSSAC1                            00000003
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 PSSBD0                            00000000
 PSSBD1                            00000001
 PSTRCON                           0000009D
@@ -490,12 +657,6 @@ Pause_1_Second                    00000004
 R                                 00000002
 RA0                               00000000
 RA1                               00000001
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 10
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 RA2                               00000002
 RA3                               00000003
 RA4                               00000004
@@ -539,6 +700,12 @@ RD5                               00000005
 RD6                               00000006
 RD7                               00000007
 RE0                               00000000
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 RE1                               00000001
 RE2                               00000002
 RE3                               00000003
@@ -549,18 +716,13 @@ RLF_Word
 RP0                               00000005
 RP1                               00000006
 RSEN                              00000001
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 11
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 RX9                               00000006
 RX9D                              00000000
 R_NOT_W                           00000002
 R_W                               00000002
 Remainder_Loop                    00000012
 Reset_Vector                      00000000
+Rotate_C_Into_ASG                 00000038
 S                                 00000003
 SBOREN                            00000004
 SCKP                              00000004
@@ -597,6 +759,12 @@ STRD                              00000003
 STRSYNC                           00000004
 SWDTEN                            00000000
 SYNC                              00000004
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 T0CS                              00000005
 T0IE                              00000005
 T0IF                              00000002
@@ -608,12 +776,6 @@ T1GINV                            00000007
 T1GIV                             00000007
 T1GSS                             00000001
 T1INSYNC                          00000002
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 12
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 T1OSCEN                           00000003
 T1SYNC                            00000002
 T2CKPS0                           00000000
@@ -656,6 +818,12 @@ TRISB4                            00000004
 TRISB5                            00000005
 TRISB6                            00000006
 TRISB7                            00000007
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE 15
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 TRISC                             00000087
 TRISC0                            00000000
 TRISC1                            00000001
@@ -667,12 +835,6 @@ TRISC6                            00000006
 TRISC7                            00000007
 TRISD                             00000088
 TRISD0                            00000000
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 13
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 TRISD1                            00000001
 TRISD2                            00000002
 TRISD3                            00000003
@@ -715,6 +877,12 @@ VREN                              00000007
 VROE                              00000006
 VRR                               00000005
 VRSS                              00000004
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE 16
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 W                                 00000000
 WCOL                              00000007
 WDTCON                            00000105
@@ -726,12 +894,6 @@ WPUB                              00000095
 WPUB0                             00000000
 WPUB1                             00000001
 WPUB2                             00000002
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 14
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 WPUB3                             00000003
 WPUB4                             00000004
 WPUB5                             00000005
@@ -741,7 +903,9 @@ WR                                00000001
 WREN                              00000002
 WRERR                             00000003
 WUE                               00000001
-Xor_Propagation_Loop              00000025
+Xor_Propagation_Loop42            0000004A
+Xor_Propagation_Loop44            0000005E
+Xor_Propagation_Loop46            0000002B
 Z                                 00000002
 _BOR21V                           00003EFF
 _BOR40V                           00003FFF
@@ -772,6 +936,12 @@ _EXTRC_OSC_NOCLKOUT               00003FFE
 _FCMEN_OFF                        000037FF
 _FCMEN_ON                         00003FFF
 _FOSC_EC                          00003FFB
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE 17
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 _FOSC_EXTRC_CLKOUT                00003FFF
 _FOSC_EXTRC_NOCLKOUT              00003FFE
 _FOSC_HS                          00003FFA
@@ -785,12 +955,6 @@ _IDLOC1                           00002001
 _IDLOC2                           00002002
 _IDLOC3                           00002003
 _IESO_OFF                         00003BFF
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  14:10:00         PAGE 15
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 _IESO_ON                          00003FFF
 _INTOSC                           00003FFD
 _INTOSCIO                         00003FFC
@@ -817,17 +981,24 @@ __16F887                          00000001
 
 MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
 
-0000 : X---XXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXX- ----------------
+0000 : X---XXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0040 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXX------- ----------------
 2000 : -------XX------- ---------------- ---------------- ----------------
 
 All other memory blocks unused.
 
-Program Memory Words Used:    44
-Program Memory Words Free:  8148
+Program Memory Words Used:   102
+Program Memory Words Free:  8090
+
+
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-22-2015  13:52:53         PAGE 18
+
+
+
 
 
 Errors   :     0
-Warnings :     3 reported,     0 suppressed
+Warnings :    18 reported,     0 suppressed
 Messages :     1 reported,     0 suppressed
 
 

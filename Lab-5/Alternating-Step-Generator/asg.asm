@@ -8,9 +8,13 @@
 	__CONFIG	_CONFIG2, _WRT_OFF & _BOR21V
 
 ;-----------LFSR Bit/Byte Sizes, Tap Locations, and Initial Values------------;
-#define LFSR_SIZE 1		; LFSR byte size
-#define LED_MASK	0x0F	; 0x07 for 3 bit LFSR, 0x0F for 4-bit LFSR, 0xFF for 8-bit LFSR
-#define LFSR1_TAP_MASK	0x0C	; 0x06 for 3-bit LFSR, 0x0C for 4-bit LFSR, 0xB8 for 8-bit LFSR
+#define LFSR_SIZE 2		; LFSR byte size
+#define LFSR0_TAP_MASK0	0x02	; 14-bit LFSR lower byte tap mask
+#define LFSR0_TAP_MASK1	0x38	;   the high byte tap mask
+#define LFSR1_TAP_MASK0	0x00	; 15-bit LFSR lower byte tap mask
+#define LFSR1_TAP_MASK1	0x60	;   the low byte tap mask
+#define LFSR2_TAP_MASK0	0x00	; 16-bit LFSR lower byte tap mask
+#define LFSR2_TAP_MASK1	0xB4	;   the lower byte of tap mask
 #define INITIAL_VALUE	1
 
 ;-----------------------Organize Program Memory---------------------;
@@ -29,8 +33,12 @@ Interupt_Vector
 	REMAINDER_DELAY
 	PROP_SIGNAL
 	BIT_INDEX
+	ASG
+	COUNTER
 	LOCAL_LFSR: LFSR_SIZE
+	LFSR0: LFSR_SIZE
 	LFSR1: LFSR_SIZE
+	LFSR2: LFSR_SIZE
 	endc
 
 ;-------- void rotate_word_left (word*, word_size); ----------------;
@@ -76,7 +84,7 @@ Linear_Xor_Function	MACRO	LFS_Register, Reg_Size, Tap_Mask
 	local i = 0
 	while i < LFSR_SIZE
 	 MOVFW	(LFS_Register + i)	; copy the LSFR to accumulator
-	 ANDLW	(Tap_Mask + i)		; AND accum. copy with TAP_MASK
+	 ANDLW	Tap_Mask#v(i)		; AND accum. copy with TAP_MASK
 	 MOVWF	(LOCAL_LFSR + i) 	; move from accum. to local function variable
 	 i += 1
 	endw
@@ -84,7 +92,7 @@ Linear_Xor_Function	MACRO	LFS_Register, Reg_Size, Tap_Mask
 	CLRF	PROP_SIGNAL		; initialize XOR signal to 0
 	MOVLW	(8 * Reg_Size)		; start XOR adding at most significat bit
 	BCF	STATUS, C		; set initial XOR add input to 0
-Xor_Propagation_Loop
+Xor_Propagation_Loop#v(LFS_Register)
 	;----------- rotate 1 bit from local copy of LSFR ----------;
 	RLF_Word	LOCAL_LFSR, LFSR_SIZE
 	;----------- Add Carry Bit to PROP_SIGNAL ------------------;
@@ -92,11 +100,10 @@ Xor_Propagation_Loop
 	ANDLW	1		; keep only the carry bit
 	ADDWF	PROP_SIGNAL, 1	; add carry bit to prop signal
 	DECFSZ	BIT_INDEX, 1	; break loop after all bits propagated
-	GOTO	Xor_Propagation_Loop
+	GOTO	Xor_Propagation_Loop#v(LFS_Register)
 ;-------Return (1s-Digit of PROP_SIGNAL) via Carry Flag ------------;
 	RRF	PROP_SIGNAL, 1
 	ENDM
-
 
 ;-------------------Initialize Data Memory--------------------------;
 Initialize
@@ -104,23 +111,50 @@ Initialize
 	BANKSEL TRISD		; select Register Bank 1
 	CLRF	TRISD		; make Port D all output pins
 	BANKSEL PORTD		; back to Register Bank 0
-	;-----------Initialize LSFRs--------------------------------;
-	MOVLW	INITIAL_VALUE
+	CLRF	PORTD
+	;-----------Initialize Memory-------------------------------;
+	MOVLW	INITIAL_VALUE	; initialize LFSRs to INITIAL_VALUE
+	MOVWF	LFSR0
 	MOVWF	LFSR1
+	MOVWF	LFSR2
+	MOVLW	8		; initialize COUNTER to 8
+	MOVWF	COUNTER
+	CLRF	ASG		; initialize ASG to 0
+	
 
 ;---------------Begin Main Program Loop-----------------------------;
 Main
-	;-------------Update LED Display----------------------------;
-	MOVFW	LFSR1
-	ANDLW	LED_MASK
-	MOVWF	PORTD
-	;-------------------Cycle LSFR -----------------------------;
-	Linear_Xor_Function	LFSR1, LFSR_SIZE, LFSR1_TAP_MASK
-		; return value is in the Carry Flag
-	RLF_Word	LFSR1, LFSR_SIZE	; shift LSFR with feedback from STATUS, C
-	;---------------Delay 1 Second-----------------------------;
-	CALL	Pause_1_Second
+	;-----------------Cycle LFSR2-------------------------------;
+	Linear_Xor_Function	LFSR2, LFSR_SIZE, LFSR2_TAP_MASK
+	RLF_Word	LFSR2, LFSR_SIZE
+	;---------Test Carry Bit and Cycle Appropriate Register-----;
+	BTFSS	STATUS, C	; skip next instruction if Carry=1
+	GOTO	Cycle_LFSR0
+	GOTO	Cycle_LFSR1
+	;-------------Rotate Result into ASG------------------------;
+Rotate_C_Into_ASG
+	RLF	ASG, 1
+	;----------------Decrement and Test Counter-----------------;
+	DECFSZ	COUNTER, 1	; decrement counter, skip next if 0
 	GOTO	Main
+	;----------Reset Counter, Update Display, & Delay-----------;
+	MOVLW	8
+	MOVWF	COUNTER		; set counter to 8
+	MOVFW	ASG
+	MOVWF	PORTD		; write ASG to the LEDs
+	CALL	Pause_1_Second	; pause remainder of 1 second
+	;----------------End of Main Loop---------------------------;
+	GOTO	Main
+
+;---------------Cycling of the two subjected LFSRs------------------;
+Cycle_LFSR0
+	Linear_Xor_Function	LFSR0, LFSR_SIZE, LFSR0_TAP_MASK
+	RLF_Word	LFSR0, LFSR_SIZE
+	GOTO	Rotate_C_Into_ASG	; return to main program
+Cycle_LFSR1
+	Linear_Xor_Function	LFSR1, LFSR_SIZE, LFSR1_TAP_MASK
+	RLF_Word	LFSR1, LFSR_SIZE
+	GOTO	Rotate_C_Into_ASG	; return to main program
 
 	END
 

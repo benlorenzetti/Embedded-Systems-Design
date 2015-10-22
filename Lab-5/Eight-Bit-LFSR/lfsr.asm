@@ -9,8 +9,8 @@
 
 ;-----------LFSR Bit/Byte Sizes, Tap Locations, and Initial Values------------;
 #define LFSR_SIZE 1		; LFSR byte size
-#define LED_MASK	0x0F	; 0x07 for 3 bit LFSR, 0x0F for 4-bit LFSR, 0xFF for 8-bit LFSR
-#define LFSR1_TAP_MASK	0x0C	; 0x06 for 3-bit LFSR, 0x0C for 4-bit LFSR, 0xB8 for 8-bit LFSR
+#define LED_MASK	0x07	; 0x07 for 3 bit LFSR, 0x0F for 4-bit LFSR, 0xFF for 8-bit LFSR
+#define LFSR1_TAP_MASK	0x06	; 0x06 for 3-bit LFSR, 0x0C for 4-bit LFSR, 0xB8 for 8-bit LFSR
 #define INITIAL_VALUE	1
 
 ;-----------------------Organize Program Memory---------------------;
