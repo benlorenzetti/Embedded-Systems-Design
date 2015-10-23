@@ -167,11 +167,77 @@ The full process of advancing to the next state in the LFSR sequence involves
 calculating the result of the linear XOR function and then shifting the LFS register
 by 1--bit with the XOR result as input. This is shown in the implementation
 flowchart in figure \ref{cycle-lfsr-flowchart}.
+
 \subsection{Hello World Program (Delay Function)}
+
+One of the requirements for both the 8--bit LFSR and the ASG is that
+the LED display should change at a rate of 1 Hz. The PIC16F887 on
+the demo board executes instructions at 1 MHz, so there will obviously
+need to be a delay after the microcontroller has calculated the next
+value, but before it should be displayed.
+
+Since I have never programmed a PIC controller and since most 
+microcontroller \texttt{hello\_world} programs are blinking LEDs with
+a time delay, this was a logical first function to implement.
+
+In the listing in \hyperref[lfsr-code]{section \ref{lfsr-code}},
+the delay function is labeled \texttt{Pause\_1\_Second} and
+consists of three nested loops and a fourth fudge factor loop.
+In theory these loops could be tuned based on the number of instructions
+in the final, debugged program to produce an exact 1 Hz cycle.
+I am far to lazy to do this though.
+
+I am predjudiced against integrated development environments because
+they obscure what is happening between your code text and the machine.
+I think they make programmers subconsciously bounded within a box.
+If you are going to learn a complicated piece of software, just learn
+the operating system---not a random IDE.
+
+This is also why I avoid MATLAB. Perhaps an exception would be LISP if
+I ever bothered to learn it, because the IDE could be, inceptionally, LISP itself.
+
+Anyway, my \texttt{.asm} source files were assembled on the command line so
+please do this if they don't compile nicely in the IDE.
+On Ubuntu, with the default MPLAB installation location, 
+from the directory containting \texttt{lfsr.asm}, the commands are:
+\begin{verbatim}
+$ cp /opt/microchip/mplabx/v3.10/mpasmx/p16f877.inc ./p16f887.inc
+$ /opt/microchip/mplabx/v3.10/mpasmx/mpasmx -p16f887 lfsr.asm
+$ more lfsr.ERR
+\end{verbatim}
 
 \subsection{Assembly Macros (Rotate Word Function)}
 
+The \texttt{RRF} and \texttt{RLF} instructions only operate on a single
+byte of data. Looking at my implementation design
+(\hyperref[fibonacci-equivalent-circuit]{figure \ref{fibonacci-equivalent-circuit}} and
+\hyperref[xor-propagation-flowchart]{figure \ref{xor-propagation-flowchart}}),
+a function that is needed often is rotating word variables of multiple bytes.
+
+The function needs to work for different word variable addresses and different byte lengths.
+It should also function just like \texttt{RRF} and \texttt{RLF} in terms of the
+\texttt{STATUS, C} flag.
+
+I implemented this function with an assembly macro labeled \texttt{RLF\_Word}
+in \hyperref[lfsr-code]{section \ref{lfsr-code}} and \ref{asg-code}.
+
 \subsection{XOR Propagation Function}
+
+The linear exclusive or cascade also lends itself to a macro, because
+it requires making a ``function scope'' copy of the \texttt{LFSR} variable
+ANDed with a \texttt{TAP\_MASK}. These variables are potentially words of
+multiple byte length, and the programmer should not have to manually add
+and remove lines based on the number of bytes desired. This can be automated
+by the assembler.
+
+My design for the LFSR concentrates all of the bit--packing operations
+for multiple--byte LFSRs into the Rotate\_Word function, so the XOR code
+does not need to have outer loops and indirect addressing nonsense for
+accessing the correct byte; the bit needed for every iteration is preplaced
+in the carry flag.
+
+The XOR function is implemented in both code implentations at the
+label \texttt{Linear\_Xor\_Function}.
 
 \subsection{8-Bit LFSR Design}
 
@@ -182,7 +248,31 @@ flowchart in figure \ref{cycle-lfsr-flowchart}.
 	\label{8-bit-lfsr-flowchart}
 \end{figure}
 
+For the first objective of the lab, my implementation is outlined in the
+flowchart in \hyperref[8-bit-lfsr-flowchart]{figure \ref{8-bit-lfsr-flowchart}}.
+The assembly source code is listed in
+\hyperref[lfsr-code]{section \ref{lfsr-code}}.
+
+Almost everything needed for the implementation is handled by the two subroutines
+discussed above, \texttt{RLF\_Word} and \texttt{Linear\_Xor\_Function}.
+
+The LFSR bit size and feedback polynomial can be changed easily by the programmer.
+Simply re\texttt{\#define} the literal values for \texttt{LFSR\_SIZE} and
+\texttt{LFSR\_TAP\_MASK}. Tap masks for several bit size LFS registers are listed
+in \hyperref[feedback-polynomials-table]{table \ref{feedback-polynomials-table}}.
+
+\pagebreak
 \subsection{ASG Design}
+
+My implementation for the alternating step generator is shown in
+\hyperref[alternating-step-generator-flowchart]{figure \ref{alternating-step-generator-flowchart}}.
+The assebly source code is listed in \hyperref[asg-code]{section \ref{asg-code}}.
+
+Again, almost everything needed for the implementation is handled by the two
+MACROs \texttt{RLF\_Word} and \texttt{Linear\_Xor\_Function}.
+
+For each of the 3 feedback shift registers, the bit sizes and tap locations
+are defined by assembler literals in lines 11--18.
 
 \begin{figure}
 	\centering
@@ -191,46 +281,101 @@ flowchart in figure \ref{cycle-lfsr-flowchart}.
 	\label{alternating-step-generator-flowchart}
 \end{figure}
 
+\pagebreak
 \section{Expected Results}
 
 \subsection{3-Bit LFSR Demonstration}
 
+To demonstrate that my implementations of the feedback shift registers
+is functioning correctly, I edited the \texttt{LED\_MASK} and
+\texttt{LFSR1\_TAP\_MASK} to produce a 3--bit LFSR.
+\begin{verbatim}
+#define  LED_MASK        0x07   ; mask all but low 3 LEDs
+#define  LFSR1_TAP_MASK  0x06   ; tap bits 2 and 3 (2 + 4 = 6)
+\end{verbatim}
+
+For 3--bits,
+one can manually observe the sequence of random numbers because
+the period is only 7 numbers long.
+
 \subsection{8-Bit LFSR Demonstration}
 
+For this demonstration, I expected the LEDs to cycle through 255 unique
+numbers at approximately 1 Hz.
+
 \subsection{ASG Demonstration}
+
+For this demonstration, I expected sequence of numbers that appears
+random. The length of the sequence before it begins to repeat is far
+to large to test experimentally.
 
 \section{Experiment and Design Revisions}
 
 \subsection{Addition of Macros}
 
+In my original implementations, I did not write macros for rotating multi--byte
+words or for making local copies of the LFSR words for the XOR propagation function.
+I had intentially designed both of these functions to scale easily to the 2--byte,
+3--LFSR needs of ASG, and MACROs turned out to be the way to program it easily in assembly.
+
 \subsection{Use of Carry Flag between Functional Blocks}
+
+When I first implemented the two macro functions, I did not use the carry
+bit for the return value because I was worried about accidentally doing
+another ALU operation in between the macro return and the use of the result.
+
+Upon closer examination, I was able to reorganize the instructions both
+inside and outside the macros so that the carry bits always remained valid and
+could be used for the function returns.
+
+It was very convenient that the folks at PIC did not make the decrement instructions
+affect \texttt{STATUS, C}.
 
 \section{Observations}
 
 \subsection{Observations}
 
+\begin{center}
+	\includegraphics[width=0.5\textwidth]{Figures/3-bit-lfsr-demo.jpg}
+	\captionof{figure}{Demonstration of 3--Bit LFSR}
+	\label{3-bit-lfsr-demo-jpg}
+\end{center}
+
 \section{Discussion}
 
-\subsection{Discussion of Results}
+I think I already discussed a lot about PIC assembly in earlier sections.
 
-\subsection{Carry Flag and PIC Design}
+I am very impressed by the value created by the folks at PIC when
+they placed the carry flag in the $0^{\textrm{th}}$ bit of the status
+register and by the side effect functionallity of this bit with arithmetic
+instructions. Having the carry bit in the 1's digit allowed me to do
+my XOR propagation without having to do any bit manipulations.
+I am also appreciative of their choice not to have decrement operations
+affect the carry flag. This is very convenient because loop iterations
+do not invalidate the carry flag.
 
-\section{Exercises}
+This was my first time programming in assembly and using the MPLAB
+integrated development environment. Unfortunately I spend a lot of
+frustrating time searching for settings and inexplicable debugging
+when trying to use the IDE. In the end I gave up and reverted to my
+comfort zone, compiling on the command line. If I get fancy I might
+write a makefile script. I think this is either a flaw about myself
+or about IDEs in general, not necessarily about MPLAB.
 
 \clearpage
 \section{Implementation Code}
 
 \subsection{8-Bit LFSR}
-\label{lsfr-code}
+\label{lfsr-code}
 
-\lstinputlisting[breaklines]{Eight-Bit-LFSR/lfsr.asm}
+\lstinputlisting[breaklines, basicstyle=\small]{Eight-Bit-LFSR/lfsr.asm}
 
 
 \clearpage
 \subsection{Alternating Step Generator}
 \label{asg-code}
 
-\lstinputlisting[breaklines]{Alternating-Step-Generator/asg.asm}
+\lstinputlisting[breaklines, basicstyle=\small]{Alternating-Step-Generator/asg.asm}
 
 
 
