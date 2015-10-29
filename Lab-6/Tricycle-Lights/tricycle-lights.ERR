@@ -1,1 +1,6 @@
-Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-6/Tricycle-Lights/tricycle-lights.asm 63 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-6/Tricycle-Lights/tricycle-lights.asm 65 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-6/Tricycle-Lights/tricycle-lights.asm 69 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-6/Tricycle-Lights/tricycle-lights.asm 70 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Warning[209] /home/ben/Documents/Embedded-Systems-Design/Lab-6/Tricycle-Lights/tricycle-lights.asm 73 : Missing quote
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-6/Tricycle-Lights/tricycle-lights.asm 74 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Warning[209] /home/ben/Documents/Embedded-Systems-Design/Lab-6/Tricycle-Lights/tricycle-lights.asm 77 : Missing quote
