@@ -1,0 +1,7 @@
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+' Exam 1, Problem 5 Demo
+DIRS = $FF00
+DO
+  OUTS = (INS << 8)
+LOOP
