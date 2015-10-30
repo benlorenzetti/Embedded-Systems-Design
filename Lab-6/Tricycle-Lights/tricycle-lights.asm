@@ -6,14 +6,13 @@
 	__CONFIG	_CONFIG1, _LVP_OFF & _FCMEN_OFF & _IESO_OFF & _BOR_OFF & _CPD_OFF & _CP_OFF & _MCLRE_OFF & _PWRTE_ON & _WDT_OFF & _INTRC_OSC_NOCLKOUT
 	__CONFIG	_CONFIG2, _WRT_OFF & _BOR21V
 
-#define LEFT_LED		RD0
-#define RIGHT_LED		RD7
-#define LED_ON_PERIOD		.16
-#define INNER_DELAY_TIME	.16
-#define MIDDLE_DELAY_TIME	.32
-#define	OSC8_CHANNEL0_NOGO_ADON	B'01000001
-#define	LEFTJUSTIFY_VSS_VDD	B'00000000
-#define RESULT_TRUNCATION_MASK	0xFC
+#define NEUTRAL_POS		0x80
+#define INNER_DELAY_TIME	0x8F
+#define MIDDLE_DELAY_TIME	0x0F
+#define MINIMUM_HALF_PERIOD	0x06
+#define	OSC8_CHANNEL0_NOGO_ADON	B'01000001'
+#define	LEFTJUSTIFY_VSS_VDD	B'00000000'
+#define RESOLUTION_MASK		B'11111100'
 
 ;-----------------------Organize Program Memory---------------------;
 Reset_Vector
@@ -35,8 +34,8 @@ Interupt_Vector
 
 ;----------Pause (INNER_DELAY * MIDDLE_DELAY * delay_time)----------;
 Delay_Function
-	MOVF	delay_time, 0		; copy delay_time to
-	MOVWF	outer_delay_counter	;   outer_delay_loop
+	MOVF	delay_time, W		; copy delay_time to
+	MOVWF	outer_delay_counter	;   outer_delay_counter
 	MOVLW	INNER_DELAY_TIME	; initialize
 	MOVWF	inner_delay_counter	;   inner_delay_counter
 	MOVLW	MIDDLE_DELAY_TIME	; initialize
@@ -54,7 +53,6 @@ Middle_Loop
 Outer_Loop
 	DECFSZ	outer_delay_counter, f
 	GOTO	Inner_Loop
-	; return from delay function
 	RETURN
 
 ;-------------------Initialize Data Memory--------------------------;
@@ -79,8 +77,6 @@ Initialize
 	MOVLW	10		
 	MOVWF	delay_time	; initialize delay_time
 	CALL	Delay_Function	; Pause to allow ADC to settle
-	;--------------- Go back to bank 0 -------------------------;
-	BANKSEL	PORTD
 
 ;---------------Begin Main Program Loop-----------------------------;
 Main
@@ -91,46 +87,34 @@ Main
 	GOTO	$-1		; go back to BTFSC instruction
 	BANKSEL ADRESH
 	MOVFW	ADRESH		; store ADC result in W
-	ANDLW	RESULT_TRUNCATION_MASK	; adjust result resolution
 	BANKSEL	PORTA		; go back to bank 0
-	;------------ Ensure Pot Input is Valid --------------------;
-	ADDLW	.0	; perform an arithmetic op on W to set Z flag
-	BTFSC	STATUS, Z
-	ADDLW	1	; if adc_result is zero, it would monkey with
-		; the condition testing in the next step
-		; so, if this is the case, set it equal to 1.
-	MOVWF	adc_result
-	;---- Test if adc_result == 10000000 (neutral position) ----;
-	BSF	STATUS, C	; add 1 to adc_result during RLF
-	RLF	adc_result, 1	; rotate 128 bit out of adc_result
-	DECF	adc_result, 1	; set zero flag if neutral position
-	; now Zero and Carry flags contain all needed information
-	;---------- if (adc_result == NEUTRAL_POSITION) ------------;
-	BTFSC	STATUS, Z	; 
-	GOTO	Main		; continue
-	;---------- Set turn_signal based on Carry Flag ------------;
-	MOVLW	1 << LEFT_LED	; assume C == 0
-	BTFSC	STATUS, C	; skip next instr. if C == 0
-	MOVLW	1 << RIGHT_LED
-	MOVWF	turn_signal	; load correct LED to blink on
-	;---------- Set turn_signal_period based on Carry Flag -----;
-	MOVFW	adc_result	; copy adc_result into W
-	MOVWF	delay_time
-		; turn_signal_period = adc_result
-	BTFSC	STATUS, C	; skip next inst. if C == 0
-	COMF	delay_time, 1
-		; turn_signal_period = ~adc_result
-	;---------- Blink the Turn Signal LED ----------------------;
-	CALL	Delay_Function
-	MOVF	turn_signal, 0	; copy turn_signal to W
-	MOVWF	PORTD		; turn on appropriate LED
-	MOVLW	LED_ON_PERIOD
-	MOVWF	delay_time
-	CALL	Delay_Function
-	CLRF	PORTD		; turn off all LEDs
-	CALL	Delay_Function
+	;------- Calculate Angular Displacement from Neutral -------;
+	MOVLW	RESOLUTION_MASK	; reduce number of steps by
+	ANDWF	ADRESH, 1	;   truncating lower bits in ADRESH
+	MOVLW	NEUTRAL_POS
+	SUBWF	ADRESH, 1	; compute displacement from Neutral
+	; Z = 1 if ADRESH == NEUTRAL_POS; C = 1 if ADRESH >= NEUTRAL_POS
+	;--------------- Perform Conditional Logic -----------------;
+	BTFSC	STATUS, Z	; test zero flag, skip next if clear
+	GOTO	Main		; if (ADRESH == NEUTRAL_POS)
+	BTFSS	STATUS, C	; if (ADRESH < NEUTRAL_POS), invert
+	COMF	ADRESH, F	;   angular displacement
+	MOVLW	1 << RD7	; assume left turn (ADRESH < NEUTRAL)
+	BTFSC	STATUS, C	; if actually (ADRESH > NEUTRAL_POS),
+	MOVLW	1 << RD0	;   then fix it to be right (RD0)
+	;------------------ Blink LEDs -----------------------------;
+	MOVWF	PORTD		; turn on LED
+	MOVLW	MINIMUM_HALF_PERIOD
+	MOVWF	delay_time	; keep LED on for fixed delay time
+	CALL	Delay_Function	; 
+	CLRF	PORTD		; turn off LEDs
+	MOVF	ADRESH, W	; compute appropriate delay time
+	SUBLW	NEUTRAL_POS + MINIMUM_HALF_PERIOD
+	MOVWF	delay_time	; (from angular displacement value)
+	CALL	Delay_Function	; delay
 	;---------- End of Main Function Loop ----------------------;
 	GOTO	Main
 ;-------------------------- End of File ----------------------------;
 	END
+
 

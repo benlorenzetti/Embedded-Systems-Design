@@ -1,15 +1,14 @@
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE  1
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00001 ; asg.asm
-                      00002 ; 3-LFSR Alternating Step Generator on PIC Development Board
-                      00003 ; Ben Lorenzetti
-                      00004 ; Embedded Systems Design, Fall 2015
-                      00005 
-                      00006 #include <p16f887.inc>
+                      00001 ; tricycle-lights.asm
+                      00002 ; Ben Lorenzetti
+                      00003 ; Embedded Systems Design, Fall 2015
+                      00004 
+                      00005 #include <p16f887.inc>
                       00001         LIST
                       00002 
                       00003 ;==========================================================================
@@ -20,156 +19,137 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00008 ;==========================================================================
                       00009 
                       00810         LIST
-2007   20C4           00007         __CONFIG        _CONFIG1, _LVP_OFF & _FCMEN_OFF & _IESO_OFF & _BOR_OFF & _CPD_OFF & _CP_OFF & _M
+2007   20C4           00006         __CONFIG        _CONFIG1, _LVP_OFF & _FCMEN_OFF & _IESO_OFF & _BOR_OFF & _CPD_OFF & _CP_OFF & _M
                             CLRE_OFF & _PWRTE_ON & _WDT_OFF & _INTRC_OSC_NOCLKOUT
-2008   3EFF           00008         __CONFIG        _CONFIG2, _WRT_OFF & _BOR21V
-                      00009 
-                      00010 #define LEFT_LED                RD0
-                      00011 #define RIGHT_LED               RD7
-                      00012 #define LED_ON_PERIOD           .16
-                      00013 #define INNER_DELAY_TIME        .16
-                      00014 #define MIDDLE_DELAY_TIME       .32
-                      00015 #define OSC8_CHANNEL0_NOGO_ADON B'01000001
-                      00016 #define LEFTJUSTIFY_VSS_VDD     B'00000000
-                      00017 #define RESULT_TRUNCATION_MASK  0xFC
-                      00018 
-                      00019 ;-----------------------Organize Program Memory---------------------;
-0000                  00020 Reset_Vector
-0000                  00021         ORG 0
-0000   2815           00022         GOTO Initialize
-                      00023 
-0001                  00024 Interupt_Vector
-0004                  00025         ORG .4
-                      00026 
-                      00027 ;--------------------Allocate Static Variables----------------------;
-                      00028         cblock  0x20
-  00000020            00029         adc_result
-  00000021            00030         turn_signal
-  00000022            00031         delay_time
-  00000023            00032         outer_delay_counter
-  00000024            00033         middle_delay_counter
-  00000025            00034         inner_delay_counter
-                      00035         endc
-                      00036 
-                      00037 ;----------Pause (INNER_DELAY * MIDDLE_DELAY * delay_time)----------;
-0004                  00038 Delay_Function
-0004   0822           00039         MOVF    delay_time, 0           ; copy delay_time to
-0005   00A3           00040         MOVWF   outer_delay_counter     ;   outer_delay_loop
-0006   3010           00041         MOVLW   INNER_DELAY_TIME        ; initialize
-0007   00A5           00042         MOVWF   inner_delay_counter     ;   inner_delay_counter
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE  2
+2008   3EFF           00007         __CONFIG        _CONFIG2, _WRT_OFF & _BOR21V
+                      00008 
+                      00009 #define NEUTRAL_POS             0x80
+                      00010 #define INNER_DELAY_TIME        0x8F
+                      00011 #define MIDDLE_DELAY_TIME       0x0F
+                      00012 #define MINIMUM_HALF_PERIOD     0x06
+                      00013 #define OSC8_CHANNEL0_NOGO_ADON B'01000001'
+                      00014 #define LEFTJUSTIFY_VSS_VDD     B'00000000'
+                      00015 #define RESOLUTION_MASK         B'11111100'
+                      00016 
+                      00017 ;-----------------------Organize Program Memory---------------------;
+0000                  00018 Reset_Vector
+0000                  00019         ORG 0
+0000   2815           00020         GOTO Initialize
+                      00021 
+0001                  00022 Interupt_Vector
+0004                  00023         ORG .4
+                      00024 
+                      00025 ;--------------------Allocate Static Variables----------------------;
+                      00026         cblock  0x20
+  00000020            00027         adc_result
+  00000021            00028         turn_signal
+  00000022            00029         delay_time
+  00000023            00030         outer_delay_counter
+  00000024            00031         middle_delay_counter
+  00000025            00032         inner_delay_counter
+                      00033         endc
+                      00034 
+                      00035 ;----------Pause (INNER_DELAY * MIDDLE_DELAY * delay_time)----------;
+0004                  00036 Delay_Function
+0004   0822           00037         MOVF    delay_time, W           ; copy delay_time to
+0005   00A3           00038         MOVWF   outer_delay_counter     ;   outer_delay_counter
+0006   308F           00039         MOVLW   INNER_DELAY_TIME        ; initialize
+0007   00A5           00040         MOVWF   inner_delay_counter     ;   inner_delay_counter
+0008   300F           00041         MOVLW   MIDDLE_DELAY_TIME       ; initialize
+0009   00A4           00042         MOVWF   middle_delay_counter    ;   middle_delay_counter
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0008   3020           00043         MOVLW   MIDDLE_DELAY_TIME       ; initialize
-0009   00A4           00044         MOVWF   middle_delay_counter    ;   middle_delay_counter
-000A                  00045 Inner_Loop
-000A   0BA5           00046         DECFSZ  inner_delay_counter, f
-000B   280A           00047         GOTO    Inner_Loop
-000C   3010           00048         MOVLW   INNER_DELAY_TIME
-000D   00A5           00049         MOVWF   inner_delay_counter
-000E                  00050 Middle_Loop
-000E   0BA4           00051         DECFSZ  middle_delay_counter, f
-000F   280A           00052         GOTO    Inner_Loop
-0010   3020           00053         MOVLW   MIDDLE_DELAY_TIME
-0011   00A4           00054         MOVWF   middle_delay_counter
-0012                  00055 Outer_Loop
-0012   0BA3           00056         DECFSZ  outer_delay_counter, f
-0013   280A           00057         GOTO    Inner_Loop
-                      00058         ; return from delay function
-0014   0008           00059         RETURN
-                      00060 
-                      00061 ;-------------------Initialize Data Memory--------------------------;
-0015                  00062 Initialize
-                      00063         ;------------- Initialize I/O ------------------------------;
-0015   1683 1303      00064         BANKSEL TRISD           ; select Register Bank 1
+000A                  00043 Inner_Loop
+000A   0BA5           00044         DECFSZ  inner_delay_counter, f
+000B   280A           00045         GOTO    Inner_Loop
+000C   308F           00046         MOVLW   INNER_DELAY_TIME
+000D   00A5           00047         MOVWF   inner_delay_counter
+000E                  00048 Middle_Loop
+000E   0BA4           00049         DECFSZ  middle_delay_counter, f
+000F   280A           00050         GOTO    Inner_Loop
+0010   300F           00051         MOVLW   MIDDLE_DELAY_TIME
+0011   00A4           00052         MOVWF   middle_delay_counter
+0012                  00053 Outer_Loop
+0012   0BA3           00054         DECFSZ  outer_delay_counter, f
+0013   280A           00055         GOTO    Inner_Loop
+0014   0008           00056         RETURN
+                      00057 
+                      00058 ;-------------------Initialize Data Memory--------------------------;
+0015                  00059 Initialize
+                      00060         ;------------- Initialize I/O ------------------------------;
+0015   1683 1303      00061         BANKSEL TRISD           ; select Register Bank 1
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0017   0188           00065         CLRF    TRISD           ; set all LED pins to output
-0018   1283 1303      00066         BANKSEL PORTD           ; back to Register Bank 0
-001A   0188           00067         CLRF    PORTD           ; set all LED pins to low
-001B   1683 1303      00068         BANKSEL TRISA
+0017   0188           00062         CLRF    TRISD           ; set all LED pins to output
+0018   1283 1303      00063         BANKSEL PORTD           ; back to Register Bank 0
+001A   0188           00064         CLRF    PORTD           ; set all LED pins to low
+001B   1683 1303      00065         BANKSEL TRISA
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-001D   0185           00069         CLRF    TRISA           ; clear TRISA
+001D   0185           00066         CLRF    TRISA           ; clear TRISA
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-001E   1405           00070         BSF     TRISA, RA0      ; set port A pin 0 to input
-                      00071         ;------------- Initialize ADC-------------------------------;
-001F   1683 1303      00072         BANKSEL ADCON1
-Warning[209]: Missing quote
-0021   3000           00073         MOVLW   LEFTJUSTIFY_VSS_VDD
+001E   1405           00067         BSF     TRISA, RA0      ; set port A pin 0 to input
+                      00068         ;------------- Initialize ADC-------------------------------;
+001F   1683 1303      00069         BANKSEL ADCON1
+0021   3000           00070         MOVLW   LEFTJUSTIFY_VSS_VDD
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0022   009F           00074         MOVWF   ADCON1          ; left justify result,
-                      00075                 ; use VSS and VDD for Vref- and Vref+
-0023   1283 1303      00076         BANKSEL ADCON0  
-Warning[209]: Missing quote
-0025   3041           00077         MOVLW   OSC8_CHANNEL0_NOGO_ADON
-0026   009F           00078         MOVWF   ADCON0          ; ADC clock rate = Fosc/8,
-                      00079                 ; ADC input channel = 0, ADC on
-0027   3010           00080         MOVLW   10              
-0028   00A2           00081         MOVWF   delay_time      ; initialize delay_time
-0029   2004           00082         CALL    Delay_Function  ; Pause to allow ADC to settle
-                      00083         ;--------------- Go back to bank 0 -------------------------;
-002A   1283 1303      00084         BANKSEL PORTD
-                      00085 
-                      00086 ;---------------Begin Main Program Loop-----------------------------;
-002C                  00087 Main
-                      00088         ;------------ Measure Potentiostat Input -------------------;
-002C   1283 1303      00089         BANKSEL ADCON0
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE  3
+0022   009F           00071         MOVWF   ADCON1          ; left justify result,
+                      00072                 ; use VSS and VDD for Vref- and Vref+
+0023   1283 1303      00073         BANKSEL ADCON0  
+0025   3041           00074         MOVLW   OSC8_CHANNEL0_NOGO_ADON
+0026   009F           00075         MOVWF   ADCON0          ; ADC clock rate = Fosc/8,
+                      00076                 ; ADC input channel = 0, ADC on
+0027   3010           00077         MOVLW   10              
+0028   00A2           00078         MOVWF   delay_time      ; initialize delay_time
+0029   2004           00079         CALL    Delay_Function  ; Pause to allow ADC to settle
+                      00080 
+                      00081 ;---------------Begin Main Program Loop-----------------------------;
+002A                  00082 Main
+                      00083         ;------------ Measure Potentiostat Input -------------------;
+002A   1283 1303      00084         BANKSEL ADCON0
+002C   149F           00085         BSF     ADCON0, GO      ; start convertion
+002D   189F           00086         BTFSC   ADCON0, GO      ; is converstion done?
+002E   282D           00087         GOTO    $-1             ; go back to BTFSC instruction
+002F   1283 1303      00088         BANKSEL ADRESH
+0031   081E           00089         MOVFW   ADRESH          ; store ADC result in W
+0032   1283 1303      00090         BANKSEL PORTA           ; go back to bank 0
+                      00091         ;------- Calculate Angular Displacement from Neutral -------;
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-002E   149F           00090         BSF     ADCON0, GO      ; start convertion
-002F   189F           00091         BTFSC   ADCON0, GO      ; is converstion done?
-0030   282F           00092         GOTO    $-1             ; go back to BTFSC instruction
-0031   1283 1303      00093         BANKSEL ADRESH
-0033   081E           00094         MOVFW   ADRESH          ; store ADC result in W
-0034   39FC           00095         ANDLW   RESULT_TRUNCATION_MASK  ; adjust result resolution
-0035   1283 1303      00096         BANKSEL PORTA           ; go back to bank 0
-                      00097         ;------------ Ensure Pot Input is Valid --------------------;
-0037   3E00           00098         ADDLW   .0      ; perform an arithmetic op on W to set Z flag
-0038   1903           00099         BTFSC   STATUS, Z
-0039   3E01           00100         ADDLW   1       ; if adc_result is zero, it would monkey with
-                      00101                 ; the condition testing in the next step
-                      00102                 ; so, if this is the case, set it equal to 1.
-003A   00A0           00103         MOVWF   adc_result
-                      00104         ;---- Test if adc_result == x0000000 (neutral position) ----;
-003B   1403           00105         BSF     STATUS, C       ; add 1 to adc_result during RLF
-003C   0DA0           00106         RLF     adc_result, 1   ; rotate 128 bit out of adc_result
-003D   03A0           00107         DECF    adc_result, 1   ; set zero flag if neutral position
-                      00108                 ; now Zero and Carry flags contain all needed inform
-                      00109         ;---------- if (adc_result == NEUTRAL_POSITION) ------------;
-003E   1903           00110         BTFSC   STATUS, Z       ; 
-003F   282C           00111         GOTO    Main            ; continue
-                      00112         ;---------- Set turn_signal based on Carry Flag ------------;
-0040   3001           00113         MOVLW   1 << LEFT_LED   ; assume C == 0
-0041   1803           00114         BTFSC   STATUS, C       ; skip next instr. if C == 0
-0042   3080           00115         MOVLW   1 << RIGHT_LED
-0043   00A1           00116         MOVWF   turn_signal     ; load correct LED to blink on
-                      00117         ;---------- Set turn_signal_period based on Carry Flag -----;
-0044   0820           00118         MOVFW   adc_result      ; copy adc_result into W
-0045   00A2           00119         MOVWF   delay_time
-                      00120                 ; turn_signal_period = adc_result
-0046   1803           00121         BTFSC   STATUS, C       ; skip next inst. if C == 0
-0047   09A2           00122         COMF    delay_time, 1
-                      00123                 ; turn_signal_period = ~adc_result
-                      00124         ;---------- Blink the Turn Signal LED ----------------------;
-0048   2004           00125         CALL    Delay_Function
-0049   0821           00126         MOVF    turn_signal, 0  ; copy turn_signal to W
-004A   0088           00127         MOVWF   PORTD           ; turn on appropriate LED
-004B   3010           00128         MOVLW   LED_ON_PERIOD
-004C   00A2           00129         MOVWF   delay_time
-004D   2004           00130         CALL    Delay_Function
-004E   0188           00131         CLRF    PORTD           ; turn off all LEDs
-004F   2004           00132         CALL    Delay_Function
-                      00133         ;---------- End of Main Function Loop ----------------------;
-0050   282C           00134         GOTO    Main
-                      00135 ;-------------------------- End of File ----------------------------;
-                      00136         END
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE  4
+0034   30FC           00092         MOVLW   RESOLUTION_MASK ; reduce number of steps by
+0035   059E           00093         ANDWF   ADRESH, 1       ;   truncating lower bits in ADRESH
+0036   3080           00094         MOVLW   NEUTRAL_POS
+0037   029E           00095         SUBWF   ADRESH, 1       ; compute displacement from Neutral
+                      00096         ; Z = 1 if ADRESH == NEUTRAL_POS; C = 1 if ADRESH >= NEUTRAL_POS
+                      00097         ;--------------- Perform Conditional Logic -----------------;
+0038   1903           00098         BTFSC   STATUS, Z       ; test zero flag, skip next if clear
+0039   282A           00099         GOTO    Main            ; if (ADRESH == NEUTRAL_POS)
+003A   1C03           00100         BTFSS   STATUS, C       ; if (ADRESH < NEUTRAL_POS), invert
+003B   099E           00101         COMF    ADRESH, F       ;   angular displacement
+003C   3080           00102         MOVLW   1 << RD7        ; assume left turn (ADRESH < NEUTRAL)
+003D   1803           00103         BTFSC   STATUS, C       ; if actually (ADRESH > NEUTRAL_POS),
+003E   3001           00104         MOVLW   1 << RD0        ;   then fix it to be right (RD0)
+                      00105         ;------------------ Blink LEDs -----------------------------;
+003F   0088           00106         MOVWF   PORTD           ; turn on LED
+0040   3006           00107         MOVLW   MINIMUM_HALF_PERIOD
+0041   00A2           00108         MOVWF   delay_time      ; keep LED on for fixed delay time
+0042   2004           00109         CALL    Delay_Function  ; 
+0043   0188           00110         CLRF    PORTD           ; turn off LEDs
+0044   081E           00111         MOVF    ADRESH, W       ; compute appropriate delay time
+0045   3C86           00112         SUBLW   NEUTRAL_POS + MINIMUM_HALF_PERIOD
+0046   00A2           00113         MOVWF   delay_time      ; (from angular displacement value)
+0047   2004           00114         CALL    Delay_Function  ; delay
+                      00115         ;---------- End of Main Function Loop ----------------------;
+0048   282A           00116         GOTO    Main
+                      00117 ;-------------------------- End of File ----------------------------;
+                      00118         END
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE  4
 
 
 SYMBOL TABLE
@@ -228,7 +208,7 @@ BRG6                              00000006
 BRG7                              00000007
 BRG8                              00000000
 BRG9                              00000001
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE  5
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE  5
 
 
 SYMBOL TABLE
@@ -287,7 +267,7 @@ CHS0                              00000002
 CHS1                              00000003
 CHS2                              00000004
 CHS3                              00000005
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE  6
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE  6
 
 
 SYMBOL TABLE
@@ -340,13 +320,13 @@ I2C_READ                          00000002
 I2C_START                         00000003
 I2C_STOP                          00000004
 INDF                              00000000
-INNER_DELAY_TIME                  .16
+INNER_DELAY_TIME                  0x8F
 INTCON                            0000000B
 INTE                              00000004
 INTEDG                            00000006
 INTF                              00000001
 IOCB                              00000096
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE  7
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE  7
 
 
 SYMBOL TABLE
@@ -367,13 +347,12 @@ IRP                               00000007
 Initialize                        00000015
 Inner_Loop                        0000000A
 Interupt_Vector                   00000001
-LED_ON_PERIOD                     .16
-LEFTJUSTIFY_VSS_VDD               B'00000000
-LEFT_LED                          RD0
+LEFTJUSTIFY_VSS_VDD               B'00000000'
 LTS                               00000001
 MC1OUT                            00000007
 MC2OUT                            00000006
-MIDDLE_DELAY_TIME                 .32
+MIDDLE_DELAY_TIME                 0x0F
+MINIMUM_HALF_PERIOD               0x06
 MSK                               00000093
 MSK0                              00000000
 MSK1                              00000001
@@ -383,8 +362,9 @@ MSK4                              00000004
 MSK5                              00000005
 MSK6                              00000006
 MSK7                              00000007
-Main                              0000002C
+Main                              0000002A
 Middle_Loop                       0000000E
+NEUTRAL_POS                       0x80
 NOT_A                             00000005
 NOT_ADDRESS                       00000005
 NOT_BO                            00000000
@@ -401,11 +381,11 @@ NOT_W                             00000002
 NOT_WRITE                         00000002
 OERR                              00000001
 OPTION_REG                        00000081
-OSC8_CHANNEL0_NOGO_ADON           B'01000001
+OSC8_CHANNEL0_NOGO_ADON           B'01000001'
 OSCCON                            0000008F
 OSCTUNE                           00000090
 OSFIE                             00000007
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE  8
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE  8
 
 
 SYMBOL TABLE
@@ -464,7 +444,7 @@ RA7                               00000007
 RB0                               00000000
 RB1                               00000001
 RB2                               00000002
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE  9
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE  9
 
 
 SYMBOL TABLE
@@ -508,8 +488,7 @@ RE1                               00000001
 RE2                               00000002
 RE3                               00000003
 READ_WRITE                        00000002
-RESULT_TRUNCATION_MASK            0xFC
-RIGHT_LED                         RD7
+RESOLUTION_MASK                   B'11111100'
 RP0                               00000005
 RP1                               00000006
 RSEN                              00000001
@@ -523,13 +502,13 @@ SBOREN                            00000004
 SCKP                              00000004
 SCS                               00000000
 SEN                               00000000
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE 10
+SENDB                             00000003
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE 10
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-SENDB                             00000003
 SMP                               00000007
 SPBRG                             00000099
 SPBRGH                            0000009A
@@ -582,13 +561,13 @@ TMR0IF                            00000002
 TMR1                              0000000E
 TMR1CS                            00000001
 TMR1GE                            00000006
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE 11
+TMR1H                             0000000F
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE 11
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-TMR1H                             0000000F
 TMR1IE                            00000000
 TMR1IF                            00000000
 TMR1L                             0000000E
@@ -641,13 +620,13 @@ TRISE                             00000089
 TRISE0                            00000000
 TRISE1                            00000001
 TRISE2                            00000002
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE 12
+TRISE3                            00000003
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE 12
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-TRISE3                            00000003
 TRMT                              00000001
 TUN0                              00000000
 TUN1                              00000001
@@ -700,13 +679,13 @@ WRERR                             00000003
 WUE                               00000001
 Z                                 00000002
 _BOR21V                           00003EFF
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE 13
+_BOR40V                           00003FFF
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE 13
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-_BOR40V                           00003FFF
 _BOR4V_BOR21V                     00003EFF
 _BOR4V_BOR40V                     00003FFF
 _BOREN_NSLEEP                     00003EFF
@@ -759,13 +738,13 @@ _MCLRE_OFF                        00003FDF
 _MCLRE_ON                         00003FFF
 _PWRTE_OFF                        00003FFF
 _PWRTE_ON                         00003FEF
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-29-2015  19:06:04         PAGE 14
+_WDTE_OFF                         00003FF7
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   10-30-2015  10:01:03         PAGE 14
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-_WDTE_OFF                         00003FF7
 _WDTE_ON                          00003FFF
 _WDT_OFF                          00003FF7
 _WDT_ON                           00003FFF
@@ -786,17 +765,17 @@ turn_signal                       00000021
 MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
 
 0000 : X---XXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
-0040 : XXXXXXXXXXXXXXXX X--------------- ---------------- ----------------
+0040 : XXXXXXXXX------- ---------------- ---------------- ----------------
 2000 : -------XX------- ---------------- ---------------- ----------------
 
 All other memory blocks unused.
 
-Program Memory Words Used:    78
-Program Memory Words Free:  8114
+Program Memory Words Used:    70
+Program Memory Words Free:  8122
 
 
 Errors   :     0
-Warnings :     2 reported,     0 suppressed
+Warnings :     0 reported,     0 suppressed
 Messages :     4 reported,     0 suppressed
 
 
