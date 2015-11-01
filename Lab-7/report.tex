@@ -11,6 +11,16 @@
 \usepackage{listings}
 \usepackage{harmony}
 \usepackage{wasysym}
+\usepackage{color}
+
+\definecolor{mygray}{rgb}{.9,.9,.9}
+\lstset{ %
+	breaklines=true
+	language=[x86masm]Assembler,
+  	backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+	numberstyle=\small\color{mygray}, % the style that is used for the line-numbers
+	numbers=none,                    % where to put the line-numbers; possible values are (none, left, right)
+}
 
 \begin{document}
 
@@ -76,6 +86,31 @@ part 1.
 
 \section{Experiment and Design Revisions}
 
+\pagebreak
+\subsection{PORTB Input}
+
+On the 44--pin demo board, the pushbutton is connected to \texttt{RB0}
+on \texttt{PORTB}, in an active low configuration with a $1k\Omega$, $10k\Omega$
+voltage divider, as shown in \hyperref[io-circuit-diagram]{figure \ref{io-circuit-diagram}}.
+
+When I first wrote my implementation for part 1 of the lab,
+I could not get the $\mu$Controller to respond to pressing the
+pushbutton switch (SW1). After inspecting the hardware with a ohmmeter,
+I knew the problem had to be in software. I created a knew `hello world'
+program for debugging the pushbutton switch.
+
+It turns out the bug was a configuration problem: \texttt{RB0} is connected
+to one of the 16 analog inputs, \texttt{AD12}. By default, the pin configured
+use with the ADC and the digital input amplifiers are turned off.
+Here is a nugget that was buried on page 49 of the PIC16F887 datasheet:
+\begin{center}
+	\includegraphics[width=0.5\textwidth]{Figures/port-b-configuration-note.pdf}
+	\captionof{figure}{Port B Configuration Note}
+\end{center}
+With this nugget, the working `pushbutton hello world' program was:
+\lstinputlisting[backgroundcolor=\color{mygray}, basicstyle=\small]{Test-SW1/test-sw1.asm}
+
+\pagebreak
 \subsection{Command Line Assembly}
 
 My \texttt{.asm} source files were assembled on the command line so
@@ -100,6 +135,7 @@ $ more catch-the-clown.ERR
 \label{debounce-time-code}
 \lstinputlisting[breaklines, basicstyle=\small]{Debounce-Time/debounce-time.asm}
 
+\clearpage
 \subsection{Catch the Clown!}
 \label{catch-the-clown-code}
 \lstinputlisting[breaklines, basicstyle=\small]{Catch-the-Clown/catch-the-clown.asm}
