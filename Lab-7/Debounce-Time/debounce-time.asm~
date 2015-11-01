@@ -14,7 +14,7 @@
 #define	LEFTJUSTIFY_VSS_VDD	B'00000000'
 #define RESOLUTION_MASK		B'11111100'
 
-;-----------------------Organize Program Memory---------------------;
+;-----------------------Organize Program Memory-------------------------------;
 Reset_Vector
 	ORG 0
 	GOTO Initialize
