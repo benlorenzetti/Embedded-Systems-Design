@@ -10,11 +10,11 @@
 #define MIDDLE_SCALAR	.32
 #define	DEBOUNCE_TIME	.8
 
-#define	chance_to_win	0x20
+#define	state		0x20
 #define	outer_counter	0x21
 #define	middle_counter	0x22
-#define	timeout_counter	0x23
-#define steady_counter	0x24
+#define timeout_counter	0x23	; non-static, timeout counter local to Monitor_SW1 ()
+#define	ss_counter	0x24	; static, steady state counter local to Monitor_SW1 ()
 
 Reset_Vector
 	ORG	0
@@ -26,18 +26,25 @@ Monitor_SW1_Function			; Initialize local scope variables
 Debounce_Loop
 	;---Monitor pushbutton input-----------------------------------------;
 	BTFSC	PORTB, RB0		; if (switch == 1)
-	MOVLW	DEBOUNCE_TIME		;   steady_counter = DEBOUNCE_TIME;
+	MOVLW	DEBOUNCE_TIME		;   ss_counter = DEBOUNCE_TIME;
 	BTFSS	PORTB, RB0		; else // if (switch == 0)
-	DECF	steady_counter, W	;   steady_counter--;	
-	MOVWF	steady_counter
+	DECF	ss_counter, W		;   ss_counter--;	
+	MOVWF	ss_counter
 	;---Check for Successful Debounce Event------------------------------;
-	BTFSC	STATUS, Z	; if (!steady_counter)
-	RETLW	1		;    return 1; // for active
+	ANDLW	0xFF		; Z = !ss_counter;
+	BTFSC	STATUS, Z	; if (Z)
+	RETLW	0		;    return 0;	// SW1 is active and steady
 	;---Check for Timeout Event------------------------------------------;
 	DECFSZ	timeout_counter	; if (--timeout_counter)
 	GOTO	Debounce_Loop	;   continue;
 				; else
-	RETLW	0		;   return 0; // for inactive/timeout
+	RETLW	1		;   return 1; // either SW1 is inactive, or
+				;   // function timed out before proven steady
+
+; uint8_t led_output Next_State_Transition (uint8_t state*, uint8_t active)
+Next_State_Transition_Function
+	MOVLW	0x01
+	RETURN
 
 Main
 Initialize_IO
@@ -52,42 +59,45 @@ Initialize_Global_Variables
 	MOVLW	0x10
 	MOVWF	PORTD
 	CLRF	PORTB
-	CLRF	chance_to_win
+	CLRF	state
 	MOVLW	DEBOUNCE_TIME
-	MOVFW	steady_counter
+	MOVFW	ss_counter
 
 Forever_Loop
-	MOVLW	OUTER_SCALAR		; else
-	MOVWF	outer_counter		;   outer_counter = OUTER_SCALAR
-Outer_Loop	; while (outer_counter)
-	MOVLW	MIDDLE_SCALAR		; else
-	MOVWF	middle_counter		;   middle_counter = MIDDLE_SCALAR
-Middle_Loop	; while (middle_counter)
-	; Monitor switch for active state (returns W=1 active; W=0 inactive)
+
+; for (outer_counter=OUTER_SCALAR; !outer_counter; outer_counter--)
+Open_Outer_Loop
+	MOVLW	OUTER_SCALAR	
+	MOVWF	outer_counter	; outer_counter = OUTER_SCALAR
+Outer_Loop
+
+; for (middle_counter=MIDDLE_SCALAR; !middle_counter; middle_counter--)
+Open_Middle_Loop
+	MOVLW	MIDDLE_SCALAR
+	MOVWF	middle_counter	; middle_counter = MIDDLE_SCALAR
+Middle_Loop
+
+Monitor_SW1
 	CALL	Monitor_SW1_Function
-	; Check for Win -----------------------------------------------------;
-	ANDWF	chance_to_win, W	; 
-	BTFSS	STATUS, Z	 	; if (return_val && chance_to_win)
+Clown_Caught
+	ADDWF	state, W		; Z = !(state + return_value)
+	BTFSS	STATUS, Z	 	; if (!Z)
 	GOTO	Middle_Loop	 	;   continue;
-					; else
-	DECFSZ	middle_counter, F	;   middle_counter--;
+
+Close_Middle_Loop
+	DECFSZ	middle_counter, F
 	GOTO	Middle_Loop
-; End Middle_Loop Scope
-	DECFSZ	outer_counter, F	; outer_counter--;
-	GOTO	Outer_Loop		; 
-; End Outer_Loop Scope
-	; Advance to Next LED State
-	BCF	STATUS, C
-	RRF	PORTD, F		; led_state = led_state >> 1
-	BTFSS	STATUS, C		; if (led_state)
-	GOTO	Forever_Loop		;    continue;
-					; if (!led_state) {
-	RRF	PORTD, F		;    led_state = 128; // Clown state
-	CLRF	chance_to_win		;    chance_to_win = false;
-	MOVF	steady_counter, W	;    // to set the zero flag
-	BTFSS	STATUS, Z		;    if (steady_counter != 0)
-	INCF	chance_to_win, F	;       chance_to_win = true;
-					; }
+
+Close_Outer_Loop
+	DECFSZ	outer_counter, F
+	GOTO	Outer_Loop
+
+Next_State_Transition
+	CALL	Next_State_Transition_Function
+
+Update_LED_Display
+	MOVWF	PORTD	; LED_Diplay = return_value;
+
 	GOTO	Forever_Loop
-; End Forever_Loop Scope ----------------------------------------------------;
+
 	END
