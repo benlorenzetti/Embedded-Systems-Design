@@ -28,20 +28,20 @@ Monitor_SW1_Function
 Debounce_Loop
 	;---------- Monitor Pushbutton Input --------------------------------;
 	BTFSC	PORTB, RB0	; if (switch == 1)
-	MOVLW	DEBOUNCE_TIME	;    ss_counter = DEBOUNCE_TIME;
-	BTFSS	PORTB, RB0	; if (!switch) // SW1 is active low
-	DECF	ss_counter, W	;    ss_counter--;
-	MOVWF	ss_counter	
+	MOVLW	DEBOUNCE_TIME	;    ss_counter = DEBOUNCE_TIME - 1;
+				; else (switch == 0) // SW1 is active low
+	DECF	ss_counter, W	;    ss_counter--;	
+	MOVWF	ss_counter
 	;---------- Check for Timeout ---------------------------------------;
 	DECF	timeout_counter, F	; debounce_counter--;
 	BTFSC	STATUS, Z		; if (!debounce_counter)
-	RETLW	0			;    return false;
+	RETLW	0			;    return false; // timeout occured
 	;---------- Check if SW1 has been steady for debounce time ----------;
-	ANDLW	0xFF		; Z = !ss_counter;
-	BTFSC	STATUS, Z	; if (!ss_counter)
-	RETLW	0xFF		;    return true;
-				; else
-	GOTO	Debounce_Loop	;    continue;
+	ANDLW	0xFF	      ; Z = !ss_counter;
+	BTFSC	STATUS, Z     ; if (Z)
+	RETLW	0xFF	      ;   return true; // rising edge detected
+			      ; else
+	GOTO	Debounce_Loop ;   continue;
 
 Main
 Initialize_IO
@@ -56,7 +56,7 @@ Initialize_State_Machine
 	MOVLW	CLOWN_STATE
 	MOVWF	led_state
 	MOVLW	DEBOUNCE_TIME
-	MOVWF	ss_counter
+	MOVFW	ss_counter
 
 State_Machine_Loop
 
@@ -74,16 +74,14 @@ Middle_Loop
 
 Monitor_SW1
 	CALL	Monitor_SW1_Function
-
 Clown_Caught_Logic
-	ADDLW	0		; Z = !return_value
-	BTFSC	STATUS, Z	; if (!return_value) // timeout occured
+	BTFSC	W, 0		; if (!return_value) // timeout occured
 	GOTO	Close_Middle_Loop;    continue;
-
-	MOVF	led_state, W
-	SUBLW	CLOWN_STATE	; Z = if (led_state == CLOWN_STATE)
-	BTFSC	STATUS, Z	; if (Z)
-	GOTO	Initialize_State_Machine; // you win!
+	GOTO	Initialize_State_Machine
+;	MOVF	led_state, W
+;	SUBLW	CLOWN_STATE	; Z = if (led_state == CLOWN_STATE)
+;	BTFSC	STATUS, Z	; if (Z)
+;	GOTO	Initialize_State_Machine
 
 Close_Middle_Loop
 	DECFSZ	middle_counter, F

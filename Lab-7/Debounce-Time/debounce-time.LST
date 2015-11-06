@@ -1,10 +1,10 @@
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE  1
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00001 ; debounce-tim.asm
+                      00001 ; debounce-time.asm
                       00002 ; Ben Lorenzetti
                       00003 ; Embedded Systems Design, Fall 2015
                       00004 
@@ -23,38 +23,71 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                             CLRE_OFF & _PWRTE_ON & _WDT_OFF & _INTRC_OSC_NOCLKOUT
 2008   3EFF           00007         __CONFIG        _CONFIG2, _WRT_OFF & _BOR21V
                       00008 
-                      00009 ;-------------------- Declare Global Variables ------------------------------;
-                      00010 #define active_state    0x20
+                      00009 #define DEBOUNCE_TIME   .1      ; software debounce sampling period is
+                      00010                                 ; T = DEBOUNCE_TIME * 14 microseconds
                       00011 
-0000                  00012 Main
-                      00013         ;--------------- Initialize Variables -------------------------------;
-0000   0186           00014         CLRF    PORTB           ; clear input port, just for good measure
-0001   01A0           00015         CLRF    active_state    ; initial active state for SW1 is active low
-0002   0188           00016         CLRF    PORTD   ; PORTD serves as counter for # of bounce events
-                      00017         ;--------------- Initialize I/O -------------------------------------;
-0003   1683           00018         BSF     STATUS, RP0     ; switch from Bank 0 to Bank 1
+                      00012 #define rising_edge_counter     PORTD
+                      00013 #define timeout_counter         0x20
+                      00014 #define ss_counter              0x21    ; steady state counter for debouncing
+                      00015 
+0000                  00016 Reset_Vector
+0000                  00017         ORG     0
+0000   280E           00018         GOTO    Main
+                      00019 
+                      00020 ;------------------ uint8_t rising_edge Monitor_SW1 () ----------------------;
+0001                  00021 Monitor_SW1_Function
+                      00022                                 ; static uint8_t ss_counter;
+0001   01A0           00023         CLRF    timeout_counter ; uint8_t timeout_counter = 256;
+0002                  00024 Debounce_Loop
+                      00025         ;---------- Monitor Pushbutton Input --------------------------------;
+0002   1806           00026         BTFSC   PORTB, RB0      ; if (switch == 1)
+0003   3001           00027         MOVLW   DEBOUNCE_TIME   ;    ss_counter = DEBOUNCE_TIME;
+0004   1C06           00028         BTFSS   PORTB, RB0      ; if (!switch) // SW1 is active low
+0005   0321           00029         DECF    ss_counter, W   ;    ss_counter--;
+0006   00A1           00030         MOVWF   ss_counter      
+                      00031         ;---------- Check for Timeout ---------------------------------------;
+0007   03A0           00032         DECF    timeout_counter, F      ; debounce_counter--;
+0008   1903           00033         BTFSC   STATUS, Z               ; if (!debounce_counter)
+0009   3400           00034         RETLW   0                       ;    return 0;
+                      00035         ;---------- Check if SW1 has been steady for debounce time ----------;
+000A   39FF           00036         ANDLW   0xFF            ; Z = !ss_counter;
+000B   1903           00037         BTFSC   STATUS, Z       ; if (Z)
+000C   3401           00038         RETLW   1               ;    return 1;
+                      00039                                 ; else
+000D   2802           00040         GOTO    Debounce_Loop   ;    continue;
+                      00041 
+000E                  00042 Main
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000E                  00043 Initialize_Variables
+000E   0188           00044         CLRF    rising_edge_counter
+000F   01A0           00045         CLRF    timeout_counter
+0010   3001           00046         MOVLW   DEBOUNCE_TIME
+0011   00A1           00047         MOVWF   ss_counter
+                      00048 
+0012                  00049 Configure_IO
+0012   1683           00050         BSF     STATUS, RP0     ; switch from bank 0 to bank 1
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0004   0188           00019         CLRF    TRISD           ; configure port D to output for LEDs
+0013   0188           00051         CLRF    TRISD           ; configure PORTD for 8-LEDs output
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0005   1406           00020         BSF     TRISB, RB0      ; configure pushbutton on RB0 for input
-0006   1683 1703      00021         BANKSEL ANSELH          ; by default, RB0/AN12 is configured as analog
+0014   1406           00052         BSF     TRISB, RB0      ; configure PORTB Pin 0 for pushbutton input
+0015   1683 1703      00053         BANKSEL ANSELH          ; by default, RB0/AN12 is configured as analog
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0008   1209           00022         BCF     ANSELH, ANS12   ;   input. Reconfigure to digital.
-0009   1283 1303      00023         BANKSEL 0x00            ; return to Bank 0
-                      00024 
-000B                  00025 Bounce_Event
-000B   0806           00026         MOVF    PORTB, W        ; store pushbutton input into W
-000C   0620           00027         XORWF   active_state, W ; compare pushbutton to new active level
-000D   3901           00028         ANDLW   1 << RB0        ; keep only pushbutton bit
-000E   1D03           00029         BTFSS   STATUS, Z       ; if (pushbutton != active_state),
-000F   280B           00030         GOTO    Bounce_Event    ;   then continue checking for bounce event
-0010   0A88           00031         INCF    PORTD, F        ; else increment the bounce counter and
+0017   1209           00054         BCF     ANSELH, ANS12   ;   input. Reconfigure to digital.
+0018   1283 1303      00055         BANKSEL 0x00            ; return to bank 0
+                      00056 
+001A                  00057 Forever_Loop
+001A   2001           00058         CALL    Monitor_SW1_Function
 Message[305]: Using default destination of 1 (file).
-0011   09A0           00032         COMF    active_state    ;   invert the active state next event
-0012   280B           00033         GOTO    Bounce_Event
-                      00034 ;------------------------------ End of File ---------------------------------;
-                      00035         END
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE  2
+001B   0788           00059         ADDWF   rising_edge_counter
+001C   281A           00060         GOTO    Forever_Loop
+                      00061 
+                      00062         END
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE  3
 
 
 SYMBOL TABLE
@@ -113,14 +146,13 @@ BRG6                              00000006
 BRG7                              00000007
 BRG8                              00000000
 BRG9                              00000001
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE  3
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE  4
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
 BRGH                              00000002
-Bounce_Event                      0000000B
 C                                 00000000
 C1CH0                             00000000
 C1CH1                             00000001
@@ -172,13 +204,13 @@ CCPR2L                            0000001B
 CHS0                              00000002
 CHS1                              00000003
 CHS2                              00000004
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE  4
+CHS3                              00000005
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE  5
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-CHS3                              00000005
 CKE                               00000006
 CKP                               00000004
 CM1CON0                           00000107
@@ -186,6 +218,7 @@ CM2CON0                           00000108
 CM2CON1                           00000109
 CREN                              00000004
 CSRC                              00000007
+Configure_IO                      00000012
 D                                 00000005
 DATA_ADDRESS                      00000005
 DC                                00000001
@@ -193,8 +226,10 @@ DC1B0                             00000004
 DC1B1                             00000005
 DC2B0                             00000004
 DC2B1                             00000005
+DEBOUNCE_TIME                     .1
 D_A                               00000005
 D_NOT_A                           00000005
+Debounce_Loop                     00000002
 ECCPAS                            0000009C
 ECCPAS0                           00000004
 ECCPAS1                           00000005
@@ -214,6 +249,7 @@ F                                 00000001
 FERR                              00000002
 FSR                               00000004
 FVREN                             00000000
+Forever_Loop                      0000001A
 GCEN                              00000007
 GIE                               00000007
 GO                                00000001
@@ -228,15 +264,15 @@ INDF                              00000000
 INTCON                            0000000B
 INTE                              00000004
 INTEDG                            00000006
-INTF                              00000001
-IOCB                              00000096
-IOCB0                             00000000
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE  5
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE  6
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+INTF                              00000001
+IOCB                              00000096
+IOCB0                             00000000
 IOCB1                             00000001
 IOCB2                             00000002
 IOCB3                             00000003
@@ -248,6 +284,7 @@ IRCF0                             00000004
 IRCF1                             00000005
 IRCF2                             00000006
 IRP                               00000007
+Initialize_Variables              0000000E
 LTS                               00000001
 MC1OUT                            00000007
 MC2OUT                            00000006
@@ -260,7 +297,8 @@ MSK4                              00000004
 MSK5                              00000005
 MSK6                              00000006
 MSK7                              00000007
-Main                              00000000
+Main                              0000000E
+Monitor_SW1_Function              00000001
 NOT_A                             00000005
 NOT_ADDRESS                       00000005
 NOT_BO                            00000000
@@ -285,17 +323,17 @@ OSTS                              00000003
 P                                 00000004
 P1M0                              00000006
 P1M1                              00000007
-PCL                               00000002
-PCLATH                            0000000A
-PCON                              0000008E
-PDC0                              00000000
-PDC1                              00000001
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE  6
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE  7
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+PCL                               00000002
+PCLATH                            0000000A
+PCON                              0000008E
+PDC0                              00000000
+PDC1                              00000001
 PDC2                              00000002
 PDC3                              00000003
 PDC4                              00000004
@@ -344,17 +382,17 @@ RB5                               00000005
 RB6                               00000006
 RB7                               00000007
 RBIE                              00000003
-RBIF                              00000000
-RC0                               00000000
-RC1                               00000001
-RC2                               00000002
-RC3                               00000003
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE  7
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE  8
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+RBIF                              00000000
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+RC3                               00000003
 RC4                               00000004
 RC5                               00000005
 RC6                               00000006
@@ -389,6 +427,7 @@ RX9                               00000006
 RX9D                              00000000
 R_NOT_W                           00000002
 R_W                               00000002
+Reset_Vector                      00000000
 S                                 00000003
 SBOREN                            00000004
 SCKP                              00000004
@@ -402,18 +441,18 @@ SPEN                              00000007
 SR0                               00000006
 SR1                               00000007
 SRCON                             00000185
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE  9
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 SREN                              00000005
 SSPADD                            00000093
 SSPBUF                            00000013
 SSPCON                            00000014
 SSPCON2                           00000091
 SSPEN                             00000005
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE  8
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 SSPIE                             00000003
 SSPIF                             00000003
 SSPM0                             00000000
@@ -461,18 +500,18 @@ TMR1ON                            00000000
 TMR2                              00000011
 TMR2IE                            00000001
 TMR2IF                            00000001
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE 10
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 TMR2ON                            00000002
 TOUTPS0                           00000003
 TOUTPS1                           00000004
 TOUTPS2                           00000005
 TOUTPS3                           00000006
 TRISA                             00000085
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE  9
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 TRISA0                            00000000
 TRISA1                            00000001
 TRISA2                            00000002
@@ -520,18 +559,18 @@ TUN2                              00000002
 TUN3                              00000003
 TUN4                              00000004
 TX8_9                             00000006
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 TX9                               00000006
 TX9D                              00000000
 TXD8                              00000000
 TXEN                              00000005
 TXIE                              00000004
 TXIF                              00000004
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE 10
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 TXREG                             00000019
 TXSTA                             00000098
 UA                                00000001
@@ -579,18 +618,18 @@ _BOREN_OFF                        00003CFF
 _BOREN_ON                         00003FFF
 _BOREN_SBODEN                     00003DFF
 _BOR_NSLEEP                       00003EFF
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 _BOR_OFF                          00003CFF
 _BOR_ON                           00003FFF
 _BOR_SBODEN                       00003DFF
 _CONFIG1                          00002007
 _CONFIG2                          00002008
 _CPD_OFF                          00003FFF
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE 11
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 _CPD_ON                           00003F7F
 _CP_OFF                           00003FFF
 _CP_ON                            00003FBF
@@ -638,22 +677,28 @@ _WRT_1FOURTH                      00003BFF
 _WRT_256                          00003DFF
 _WRT_HALF                         000039FF
 _WRT_OFF                          00003FFF
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  15:58:58         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 _XT_OSC                           00003FF9
 __16F887                          00000001
-active_state                      0x20
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-1-2015  15:28:50         PAGE 12
+rising_edge_counter               PORTD
+ss_counter                        0x21
+timeout_counter                   0x20
 
 
 MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
 
-
-0000 : XXXXXXXXXXXXXXXX XXX------------- ---------------- ----------------
+0000 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXX--- ---------------- ----------------
 2000 : -------XX------- ---------------- ---------------- ----------------
 
 All other memory blocks unused.
 
-Program Memory Words Used:    19
-Program Memory Words Free:  8173
+Program Memory Words Used:    29
+Program Memory Words Free:  8163
 
 
 Errors   :     0
