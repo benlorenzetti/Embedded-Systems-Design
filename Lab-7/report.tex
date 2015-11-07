@@ -38,10 +38,10 @@
 \section{Objectives and Problem Description}
 
 \subsection{Part 1: Does the Switch Bounce?}
-\label{switch-debounce-problem-specs}
+\label{part-1-problem-specs}
 
 \subsection{Part 2: Catch the Clown!}
-\label{catch-the-clown-problem-specs}
+\label{part-2-problem-specs}
 
 Build a game for testing reaction times with an 8 LED rotating display,
 a pushbutton trigger, and a knob for adjusting the speed/difficulty.
@@ -71,7 +71,15 @@ before settling at the active level. This is caused by electric arcing and break
 as the contacts near one other and from mechanical vibrations of contacts from the
 throwing force.
 
-\begin{figure}
+Bouncing can cause problems if the device's function depends on the number of times
+a switch is thrown. For example, if you keyboard bounced, you would find yourself
+typing repeat letters and unpredictable backspacing. Traditionally switches were
+`debounced' with low pass filters in hardware, but with fast microcontrollers
+debouncing can be done in software to reduce hardware costs.
+\hyperref[io-circuit-diagram]{Figure \ref{io-circuit-diagram}} shows how PIC did this
+with their PIC16F887 44--pin demo board.
+
+\begin{figure}[h!]
 \centering
 	\begin{subfigure}[b]{.4\textwidth}
 		\centering
@@ -90,17 +98,28 @@ throwing force.
 	\label{io-circuit-diagram}
 \end{figure}
 
-Bouncing can cause problems if the device's function depends on the number of times
-a switch is thrown. For example, if you keyboard bounced, you would find yourself
-typing repeat letters and unpredictable backspacing. Traditionally switches were
-`debounced' with low pass filters in hardware, but with fast microcontrollers
-debouncing can be done in software to reduce hardware costs.
-\hyperref[io-circuit-diagram]{Figure \ref{io-circuit-diagram}} shows how PIC did this
-with their PIC16F887 44--pin demo board.
-
 \subsection{Part 1: Debouncing \texttt{SW1}}
 
-\begin{figure}
+To test the bouncing time of the 44--pin demo board as described in
+\hyperref[part-1-problem-specs]{section \ref{part-1-problem-specs}},
+I decided to create a loop that tests the pushbutton switch with a
+settable sampling frequency. Looking ahead to part 2 of the lab,
+there should be a function that is monitoring \texttt{SW1} for an
+falling edge (activation edge), but times out to allow other important
+CPU work if there is no activation event within a set period of time.
+
+My implementation for these requirements is shown in
+\hyperref[monitor-sw1-function-implementation]{figure \ref{monitor-sw1-function-implementation}}.
+Making an analogy to C, the piece that can be reused for the second part of the lab
+is a function with no inputs that does debounce monitoring and returns 1
+if an activation edge was detected or 0 if there was no activation event within
+a set period of time. The steady state counter variable is implemented like a C
+\texttt{static} variable so that the function has some `state' memory from the
+last time the function was called. With this \texttt{static} variable, the function
+will not return false activation event 1s if the pushbutton was already active before
+function call.
+
+\begin{figure}[h!]
 	\centering
 	\begin{tikzpicture}[node distance = 2cm, font=\fontsize{8pt}{9pt}\selectfont]
 		\node[draw, align=center, ellipse] (monitor-sw1) at (0, 0) {\underline{Monitor \texttt{SW1} Function}\\\texttt{uint8\_t rising\_edge Monitor\_SW1 ();}};
@@ -141,11 +160,34 @@ with their PIC16F887 44--pin demo board.
 	\label{monitor-sw1-function-implementation}
 \end{figure}
 
+The implementation code is shown in
+\hyperref[debounce-time-code]{section \ref{debounce-time-code}}.
+From counting the number of instructions and each instruction's cost,
+the loop samples the pushbutton switch with a period of 14 CPU clock cycles.
+With the debouncing steady state counter, this means the function can return 1
+after the switch has been steadily high for
+\begin{equation}
+T_{\textrm{debounced}}=\textrm{\texttt{DEBOUNCE\_TIME}}*14\,\mu s
+\label{debounce-period-eq}
+\end{equation}
+after an activation event. Furthermore, the smallest period of bouncing
+that can be detected is
+\begin{equation}
+T_{\textrm{sampling}}=14\,\mu s
+\end{equation}
+
+
 \subsection{Part 2: Catch the Clown Game}
 
 \section{Expected Results}
 
 \subsection{Debounce Time}
+
+From Professor Vemuri's lecture,
+\hyperref[debounce-handout-time-graph]{figure \ref{debounce-handout-time-graph}}
+shows the timescale at which some random switch bounces.
+Based on this plot, the expected bouncing time of \texttt{SW1}
+was on the order of $500\, \mu s$.
 
 \begin{figure}
 	\centering
@@ -153,12 +195,6 @@ with their PIC16F887 44--pin demo board.
 	\caption{A Bouncing Input Signal from a Switch}
 	\label{debounce-handout-time-graph}
 \end{figure}
-
-From Professor Vemuri's lecture,
-\hyperref[debounce-handout-time-graph]{figure \ref{debounce-handout-time-graph}}
-shows the timescale at which some random switch bounces.
-Based on this plot, the expected bouncing time of \texttt{SW1}
-was on the order of $500\, \mu s$.
 
 \section{Experiment and Design Revisions}
 
@@ -209,6 +245,68 @@ T=X*14\, \mu s=XXX
 before a switch activation is accepted by the program.
 
 \section{Observations}
+
+Using the part 1 implementation shown in
+\hyperref[monitor-sw1-function-implementation]{figure \ref{monitor-sw1-function-implementation}},
+the PIC16F887 demo board was tested to determine the typical bounce time of
+the pushbutton switch \texttt{SW1}. The implementation essentially counts the
+number of activation events that occur--importantly not counting any activation events
+which are not followed by an active signal for longer than \texttt{DEBOUNCE\_TIME} cycles.
+The total number of activation events counted are displayed on the 8 LEDs.
+
+The debounce time period required is given by
+\begin{equation*}
+T_{\textrm{steady state}}=\textrm{\texttt{DEBOUNCE\_TIME}}*14\,\mu s
+\end{equation*}
+
+The value \texttt{DEBOUNCE\_TIME} was initially set to 255 to filter out any
+all bouncing with lifetimes up to $T_{\textrm{steady state}}=3.5\,ms$.
+With this filter period and 30 trials, the probability of
+detecting more than 1 activation edge per button press was zero.
+
+This procedure was repeated with decreasing values for \texttt{DEBOUNCE\_TIME}
+until any trial detected more than 1 activation event per button press.
+This did not happen until \texttt{DEBOUNCE\_TIME} = 1.
+
+The results using a debouncing filter period of
+\begin{equation*}
+T_{\textrm{steady state}}=\textrm{\texttt{1}}*14\,\mu s
+\end{equation*}
+are shown in \hyperref[debounce-time-results]{figure \ref{debounce-time-results}}.
+Assuming that the trials are a bernoulli process, the data was
+analyzed with a standard normal distribution, with average number of bounces
+\begin{equation*}
+\mu=1.172T_{\textrm{steady state}}=16.41\,\mu s
+\end{equation*}
+and standard deviation
+\begin{equation*}
+\sigma=0.530T_{\textrm{steady state}}=7.42\,\mu s.
+\end{equation*}
+
+For the implementation of part 2, if \texttt{DEBOUNCE\_TIME} is set to 8,
+then we can estimate the probabilty of erroneously counting a an activation
+event multiple times.
+\begin{equation*}
+\begin{array}{c c c}
+P(X>8T)	&=	&1-P(X<8T)	\\
+&=&	1-P\left(Z<\frac{8T-1.172T}{0.53T}\right)	\\
+&=&	1-P(Z<12.88)	\\
+\end{array}
+\end{equation*}
+I could not find any tables for a Z score of 12.88, but from the highest
+value I did find, the probability a bounce passing through this filter
+period is certainly less than
+\begin{equation*}
+P(X>8T)<0.001\%
+\end{equation*}
+
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{Figures/debounce-time-results.pdf}
+	\caption{Experimental Debounce Time Results from the Part 1 Implementation}
+	\label{debounce-time-results}
+\end{figure}
 
 \subsection{44--Pin Demo Board \texttt{SW1} Bouncing Time}
 \label{part-1-results-section}
