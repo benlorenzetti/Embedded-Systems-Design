@@ -1,4 +1,4 @@
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE  1
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -23,120 +23,159 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                             CLRE_OFF & _PWRTE_ON & _WDT_OFF & _INTRC_OSC_NOCLKOUT
 2008   3EFF           00007         __CONFIG        _CONFIG2, _WRT_OFF & _BOR21V
                       00008 
-                      00009 #define OUTER_SCALAR    .8
-                      00010 #define MIDDLE_SCALAR   .16
+                      00009 #define OUTER_MIN_PERIOD        .4
+                      00010 #define MIDDLE_SCALAR   .8
                       00011 #define DEBOUNCE_TIME   .8
                       00012 #define CLOWN_STATE     1 << 7
-                      00013 
-                      00014 #define led_state       PORTD
-                      00015 #define outer_counter   0x21
-                      00016 #define middle_counter  0x22
-                      00017 #define timeout_counter 0x23    ; timeout counter local to Monitor_SW1 ()
-                      00018 #define ss_counter      0x24    ; steady state time counter, static and local to Monitor_SW1 ()
-                      00019 
-0000                  00020 Reset_Vector
-0000                  00021         ORG     0
-0000   280E           00022         GOTO    Main
-                      00023 
-                      00024 ;------------------ uint8_t rising_edge Monitor_SW1 () ----------------------;
-0001                  00025 Monitor_SW1_Function
-                      00026                                 ; static uint8_t ss_counter;
-0001   01A3           00027         CLRF    timeout_counter ; uint8_t timeout_counter = 256;
-0002                  00028 Debounce_Loop
-                      00029         ;---------- Monitor Pushbutton Input --------------------------------;
-0002   1806           00030         BTFSC   PORTB, RB0      ; if (switch == 1)
-0003   3008           00031         MOVLW   DEBOUNCE_TIME   ;    ss_counter = DEBOUNCE_TIME;
-0004   1C06           00032         BTFSS   PORTB, RB0      ; if (!switch) // SW1 is active low
-0005   0324           00033         DECF    ss_counter, W   ;    ss_counter--;
-0006   00A4           00034         MOVWF   ss_counter      
-                      00035         ;---------- Check for Timeout ---------------------------------------;
-0007   03A3           00036         DECF    timeout_counter, F      ; debounce_counter--;
-0008   1903           00037         BTFSC   STATUS, Z               ; if (!debounce_counter)
-0009   3400           00038         RETLW   0                       ;    return false;
-                      00039         ;---------- Check if SW1 has been steady for debounce time ----------;
-000A   39FF           00040         ANDLW   0xFF            ; Z = !ss_counter;
-000B   1903           00041         BTFSC   STATUS, Z       ; if (!ss_counter)
-000C   34FF           00042         RETLW   0xFF            ;    return true;
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE  2
+                      00013 #define OSC8_CHANNEL0_NOGO_ADON 0x41
+                      00014 #define LEFTJUSTIFY_VSS_VDD     0x00
+                      00015 
+                      00016 #define led_state       PORTD
+                      00017 #define period          0x20
+                      00018 #define outer_counter   0x21
+                      00019 #define middle_counter  0x22
+                      00020 #define timeout_counter 0x23    ; timeout counter local to Monitor_SW1 ()
+                      00021 #define ss_counter      0x24    ; static, steady state time counter
+                      00022 
+0000                  00023 Reset_Vector
+0000                  00024         ORG     0
+0000   280E           00025         GOTO    Main
+                      00026 
+                      00027 ;------------------ uint8_t rising_edge Monitor_SW1 () ----------------------;
+0001                  00028 Monitor_SW1_Function
+                      00029                                 ; static uint8_t ss_counter;
+0001   01A3           00030         CLRF    timeout_counter ; uint8_t timeout_counter = 256;
+0002                  00031 Debounce_Loop
+                      00032         ;---------- Monitor Pushbutton Input --------------------------------;
+0002   1806           00033         BTFSC   PORTB, RB0      ; if (switch == 1)
+0003   3008           00034         MOVLW   DEBOUNCE_TIME   ;    ss_counter = DEBOUNCE_TIME;
+0004   1C06           00035         BTFSS   PORTB, RB0      ; if (!switch) // SW1 is active low
+0005   0324           00036         DECF    ss_counter, W   ;    ss_counter--;
+0006   00A4           00037         MOVWF   ss_counter      
+                      00038         ;---------- Check for Timeout ---------------------------------------;
+0007   03A3           00039         DECF    timeout_counter, F      ; debounce_counter--;
+0008   1903           00040         BTFSC   STATUS, Z               ; if (!debounce_counter)
+0009   3400           00041         RETLW   0                       ;    return false;
+                      00042         ;---------- Check if SW1 has been steady for debounce time ----------;
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00043                                 ; else
-000D   2802           00044         GOTO    Debounce_Loop   ;    continue;
-                      00045 
-000E                  00046 Main
-000E                  00047 Initialize_IO
-000E   1683           00048         BSF     STATUS, RP0     ; switch from Bank 0 to Bank 1
+000A   39FF           00043         ANDLW   0xFF            ; Z = !ss_counter;
+000B   1903           00044         BTFSC   STATUS, Z       ; if (!ss_counter)
+000C   34FF           00045         RETLW   0xFF            ;    return true;
+                      00046                                 ; else
+000D   2802           00047         GOTO    Debounce_Loop   ;    continue;
+                      00048 
+000E                  00049 Main
+000E                  00050 Initialize_IO
+000E   1683           00051         BSF     STATUS, RP0     ; switch from Bank 0 to Bank 1
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-000F   0188           00049         CLRF    TRISD           ; configure port D to output for LEDs
+000F   0188           00052         CLRF    TRISD           ; configure port D to output for LEDs
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0010   1406           00050         BSF     TRISB, RB0      ; configure pushbutton on RB0 for input
-0011   1683 1703      00051         BANKSEL ANSELH          ; by default, RB0/AN12 is configured as analog
+0010   1406           00053         BSF     TRISB, RB0      ; configure pushbutton on RB0 for input
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0013   1209           00052         BCF     ANSELH, ANS12   ;   input. Reconfigure to digital.
-0014   1283 1303      00053         BANKSEL 0x00            ; return to Bank 0
-                      00054 
-0016                  00055 Initialize_State_Machine
-0016   3080           00056         MOVLW   CLOWN_STATE
-0017   0088           00057         MOVWF   led_state
-0018   3008           00058         MOVLW   DEBOUNCE_TIME
-0019   00A4           00059         MOVWF   ss_counter
+0011   1405           00054         BSF     TRISA, RA0      ; configure potentionmeter on RA0 for input
+0012   1683 1703      00055         BANKSEL ANSEL           ; go to bank 3
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0014   1408           00056         BSF     ANSEL, 0
+0015   1683 1703      00057         BANKSEL ANSELH          ; by default, RB0/AN12 is configured as analog
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0017   1209           00058         BCF     ANSELH, ANS12   ;   input. Reconfigure to digital.
+0018   1283 1303      00059         BANKSEL 0x00            ; return to Bank 0
                       00060 
-001A                  00061 State_Machine_Loop
-                      00062 
-                      00063 ; for (outer_counter=OUTER_SCALAR; !outer_counter; outer_counter--)
-001A                  00064 Open_Outer_Loop
-001A   3008           00065         MOVLW   OUTER_SCALAR    
-001B   00A1           00066         MOVWF   outer_counter   ; outer_counter = OUTER_SCALAR
-001C                  00067 Outer_Loop
-                      00068 
-                      00069 ; for (middle_counter=MIDDLE_SCALAR; !middle_counter; middle_counter--)
-001C                  00070 Open_Middle_Loop
-001C   3010           00071         MOVLW   MIDDLE_SCALAR
-001D   00A2           00072         MOVWF   middle_counter  ; middle_counter = MIDDLE_SCALAR
-001E                  00073 Middle_Loop
-                      00074 
-001E                  00075 Monitor_SW1
-001E   2001           00076         CALL    Monitor_SW1_Function
-                      00077 
-001F                  00078 Clown_Caught_Logic
-001F   3E00           00079         ADDLW   0               ; Z = !return_value
-0020   1903           00080         BTFSC   STATUS, Z       ; if (!return_value) // timeout occured
-0021   2826           00081         GOTO    Close_Middle_Loop;    continue;
-                      00082 
-0022   0808           00083         MOVF    led_state, W
-0023   3C80           00084         SUBLW   CLOWN_STATE     ; Z = if (led_state == CLOWN_STATE)
-0024   1903           00085         BTFSC   STATUS, Z       ; if (Z)
-0025   2816           00086         GOTO    Initialize_State_Machine; // you win!
-                      00087 
-0026                  00088 Close_Middle_Loop
-0026   0BA2           00089         DECFSZ  middle_counter, F
-0027   281E           00090         GOTO    Middle_Loop
-                      00091 
-0028                  00092 Close_Outer_Loop
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE  3
+Warning[208]: Label truncated at 32 characters. (Initialize_Analog_to_Digital_Converter)
+001A                  00061 Initialize_Analog_to_Digital_Converter
+001A   1683 1303      00062         BANKSEL ADCON1
+001C   3000           00063         MOVLW   LEFTJUSTIFY_VSS_VDD
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+001D   009F           00064         MOVWF   ADCON1          ; left justify result,
+                      00065                 ; use VSS and VDD for Vref- and Vref+
+001E   1283 1303      00066         BANKSEL ADCON0  
+0020   3041           00067         MOVLW   OSC8_CHANNEL0_NOGO_ADON
+0021   009F           00068         MOVWF   ADCON0          ; ADC clock rate = Fosc/8,
+                      00069                 ; ADC input channel = 0, ADC on
+                      00070 
+0022                  00071 ADC_Acquisition_Time
+0022   01A1           00072         CLRF    outer_counter
+0023   01A2           00073         CLRF    middle_counter
+0024                  00074 One_Off_Delay_Loop
+0024   0BA2           00075         DECFSZ  middle_counter, F
+0025   2824           00076         GOTO    One_Off_Delay_Loop
+0026   0BA1           00077         DECFSZ  outer_counter, F
+0027   2824           00078         GOTO    One_Off_Delay_Loop
+                      00079         
+0028                  00080 Initialize_State_Machine
+0028   3080           00081         MOVLW   CLOWN_STATE
+0029   0088           00082         MOVWF   led_state
+002A   3008           00083         MOVLW   DEBOUNCE_TIME
+002B   00A4           00084         MOVWF   ss_counter
+002C                  00085 State_Machine_Loop
+                      00086 
+002C                  00087 Measure_Potentiometer
+002C   149F           00088         BSF     ADCON0, GO      ; start convertion
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0028   0BA1           00093         DECFSZ  outer_counter, F
-0029   281C           00094         GOTO    Outer_Loop
-                      00095 
-002A                  00096 Next_State_Transition
-002A   1003           00097         BCF     STATUS, C
-002B   0C88           00098         RRF     led_state, F    ; led_state = state >> 1;
-002C   1C03           00099         BTFSS   STATUS, C       ; if (state)
-002D   281A           00100         GOTO    State_Machine_Loop;  continue; // continue forever loop
-                      00101                                 ; else {
-002E   0C88           00102         RRF     led_state, F    ;    led_state = 128;
-002F   281A           00103         GOTO    State_Machine_Loop
-                      00104                                 ; continue; // continue forever loop
-                      00105 
-                      00106         END
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE  4
+002D   189F           00089         BTFSC   ADCON0, GO      ; is converstion done?
+002E   282D           00090         GOTO    $-1             ; go back to is conversion done?
+                      00091 
+002F                  00092 Set_Period                      ; swap upper nibble of ADC result
+002F   0E1E           00093         SWAPF   ADRESH, W       ; into lower 4 bits of W
+0030   390F           00094         ANDLW   0x0F            ; keep only the lower 4 bits
+0031   3E04           00095         ADDLW   OUTER_MIN_PERIOD; 
+0032   00A0           00096         MOVWF   period  ; period = (ADC_result >> 4) + MIN_PERIOD
+                      00097 
+                      00098 ; for (outer_counter=OUTER_SCALAR; !outer_counter; outer_counter--)
+0033                  00099 Open_Outer_Loop
+0033   0820           00100         MOVF    period, W
+0034   00A1           00101         MOVWF   outer_counter   ; outer_counter = OUTER_SCALAR
+0035                  00102 Outer_Loop
+                      00103 
+                      00104 ; for (middle_counter=MIDDLE_SCALAR; !middle_counter; middle_counter--)
+0035                  00105 Open_Middle_Loop
+0035   3008           00106         MOVLW   MIDDLE_SCALAR
+0036   00A2           00107         MOVWF   middle_counter  ; middle_counter = MIDDLE_SCALAR
+0037                  00108 Middle_Loop
+                      00109 
+0037                  00110 Monitor_SW1
+0037   2001           00111         CALL    Monitor_SW1_Function
+                      00112 
+0038                  00113 Clown_Caught_Logic
+0038   3E00           00114         ADDLW   0               ; Z = !return_value
+0039   1903           00115         BTFSC   STATUS, Z       ; if (!return_value) // timeout occured
+003A   283F           00116         GOTO    Close_Middle_Loop;    continue;
+                      00117 
+003B   0808           00118         MOVF    led_state, W
+003C   3C80           00119         SUBLW   CLOWN_STATE     ; Z = if (led_state == CLOWN_STATE)
+003D   1903           00120         BTFSC   STATUS, Z       ; if (Z)
+003E   2828           00121         GOTO    Initialize_State_Machine; // you win!
+                      00122 
+003F                  00123 Close_Middle_Loop
+003F   0BA2           00124         DECFSZ  middle_counter, F
+0040   2837           00125         GOTO    Middle_Loop
+                      00126 
+0041                  00127 Close_Outer_Loop
+0041   0BA1           00128         DECFSZ  outer_counter, F
+0042   2835           00129         GOTO    Outer_Loop
+                      00130 
+0043                  00131 Next_State_Transition
+0043   1003           00132         BCF     STATUS, C
+0044   0C88           00133         RRF     led_state, F    ; led_state = state >> 1;
+0045   1C03           00134         BTFSS   STATUS, C       ; if (state)
+0046   282C           00135         GOTO    State_Machine_Loop;  continue; // continue forever loop
+                      00136                                 ; else {
+0047   0C88           00137         RRF     led_state, F    ;    led_state = 128;
+0048   282C           00138         GOTO    State_Machine_Loop
+                      00139                                 ; continue; // continue forever loop
+                      00140 
+                      00141         END
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE  4
 
 
 SYMBOL TABLE
@@ -151,6 +190,7 @@ ADCON0                            0000001F
 ADCON1                            0000009F
 ADCS0                             00000006
 ADCS1                             00000007
+ADC_Acquisition_Time              00000022
 ADDEN                             00000003
 ADFM                              00000007
 ADIE                              00000006
@@ -194,13 +234,13 @@ BRG5                              00000005
 BRG6                              00000006
 BRG7                              00000007
 BRG8                              00000000
-BRG9                              00000001
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE  5
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE  5
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+BRG9                              00000001
 BRGH                              00000002
 C                                 00000000
 C1CH0                             00000000
@@ -253,13 +293,13 @@ CCPR2L                            0000001B
 CHS0                              00000002
 CHS1                              00000003
 CHS2                              00000004
-CHS3                              00000005
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE  6
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE  6
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+CHS3                              00000005
 CKE                               00000006
 CKP                               00000004
 CLOWN_STATE                       1 << 7
@@ -268,9 +308,9 @@ CM2CON0                           00000108
 CM2CON1                           00000109
 CREN                              00000004
 CSRC                              00000007
-Close_Middle_Loop                 00000026
-Close_Outer_Loop                  00000028
-Clown_Caught_Logic                0000001F
+Close_Middle_Loop                 0000003F
+Close_Outer_Loop                  00000041
+Clown_Caught_Logic                00000038
 D                                 00000005
 DATA_ADDRESS                      00000005
 DC                                00000001
@@ -312,13 +352,13 @@ I2C_READ                          00000002
 I2C_START                         00000003
 I2C_STOP                          00000004
 INDF                              00000000
-INTCON                            0000000B
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE  7
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE  7
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+INTCON                            0000000B
 INTE                              00000004
 INTEDG                            00000006
 INTF                              00000001
@@ -335,12 +375,14 @@ IRCF0                             00000004
 IRCF1                             00000005
 IRCF2                             00000006
 IRP                               00000007
+Initialize_Analog_to_Digital_Con  0000001A
 Initialize_IO                     0000000E
-Initialize_State_Machine          00000016
+Initialize_State_Machine          00000028
+LEFTJUSTIFY_VSS_VDD               0x00
 LTS                               00000001
 MC1OUT                            00000007
 MC2OUT                            00000006
-MIDDLE_SCALAR                     .16
+MIDDLE_SCALAR                     .8
 MSK                               00000093
 MSK0                              00000000
 MSK1                              00000001
@@ -351,8 +393,9 @@ MSK5                              00000005
 MSK6                              00000006
 MSK7                              00000007
 Main                              0000000E
-Middle_Loop                       0000001E
-Monitor_SW1                       0000001E
+Measure_Potentiometer             0000002C
+Middle_Loop                       00000037
+Monitor_SW1                       00000037
 Monitor_SW1_Function              00000001
 NOT_A                             00000005
 NOT_ADDRESS                       00000005
@@ -368,24 +411,26 @@ NOT_TO                            00000004
 NOT_TX8                           00000006
 NOT_W                             00000002
 NOT_WRITE                         00000002
-Next_State_Transition             0000002A
-OERR                              00000001
-OPTION_REG                        00000081
-OSCCON                            0000008F
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE  8
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE  8
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+Next_State_Transition             00000043
+OERR                              00000001
+OPTION_REG                        00000081
+OSC8_CHANNEL0_NOGO_ADON           0x41
+OSCCON                            0000008F
 OSCTUNE                           00000090
 OSFIE                             00000007
 OSFIF                             00000007
 OSTS                              00000003
-OUTER_SCALAR                      .8
-Open_Middle_Loop                  0000001C
-Open_Outer_Loop                   0000001A
-Outer_Loop                        0000001C
+OUTER_MIN_PERIOD                  .4
+One_Off_Delay_Loop                00000024
+Open_Middle_Loop                  00000035
+Open_Outer_Loop                   00000033
+Outer_Loop                        00000035
 P                                 00000004
 P1M0                              00000006
 P1M1                              00000007
@@ -425,18 +470,18 @@ PULSR                             00000002
 PULSS                             00000003
 PWM1CON                           0000009B
 R                                 00000002
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE  9
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 RA0                               00000000
 RA1                               00000001
 RA2                               00000002
 RA3                               00000003
 RA4                               00000004
 RA5                               00000005
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE  9
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 RA6                               00000006
 RA7                               00000007
 RB0                               00000000
@@ -484,18 +529,18 @@ RP0                               00000005
 RP1                               00000006
 RSEN                              00000001
 RX9                               00000006
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE 10
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 RX9D                              00000000
 R_NOT_W                           00000002
 R_W                               00000002
 Reset_Vector                      00000000
 S                                 00000003
 SBOREN                            00000004
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE 10
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 SCKP                              00000004
 SCS                               00000000
 SEN                               00000000
@@ -530,7 +575,8 @@ STRD                              00000003
 STRSYNC                           00000004
 SWDTEN                            00000000
 SYNC                              00000004
-State_Machine_Loop                0000001A
+Set_Period                        0000002F
+State_Machine_Loop                0000002C
 T0CS                              00000005
 T0IE                              00000005
 T0IF                              00000002
@@ -542,6 +588,12 @@ T1GINV                            00000007
 T1GIV                             00000007
 T1GSS                             00000001
 T1INSYNC                          00000002
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 T1OSCEN                           00000003
 T1SYNC                            00000002
 T2CKPS0                           00000000
@@ -549,12 +601,6 @@ T2CKPS1                           00000001
 T2CON                             00000012
 TMR0                              00000001
 TMR0IE                            00000005
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE 11
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 TMR0IF                            00000002
 TMR1                              0000000E
 TMR1CS                            00000001
@@ -601,6 +647,12 @@ TRISC6                            00000006
 TRISC7                            00000007
 TRISD                             00000088
 TRISD0                            00000000
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 TRISD1                            00000001
 TRISD2                            00000002
 TRISD3                            00000003
@@ -608,12 +660,6 @@ TRISD4                            00000004
 TRISD5                            00000005
 TRISD6                            00000006
 TRISD7                            00000007
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE 12
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 TRISE                             00000089
 TRISE0                            00000000
 TRISE1                            00000001
@@ -660,6 +706,12 @@ WPUB                              00000095
 WPUB0                             00000000
 WPUB1                             00000001
 WPUB2                             00000002
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 WPUB3                             00000003
 WPUB4                             00000004
 WPUB5                             00000005
@@ -667,12 +719,6 @@ WPUB6                             00000006
 WPUB7                             00000007
 WR                                00000001
 WREN                              00000002
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE 13
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 WRERR                             00000003
 WUE                               00000001
 Z                                 00000002
@@ -719,6 +765,12 @@ _IDLOC2                           00002002
 _IDLOC3                           00002003
 _IESO_OFF                         00003BFF
 _IESO_ON                          00003FFF
+MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-6-2015  21:35:28         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 _INTOSC                           00003FFD
 _INTOSCIO                         00003FFC
 _INTRC_OSC_CLKOUT                 00003FFD
@@ -726,12 +778,6 @@ _INTRC_OSC_NOCLKOUT               00003FFC
 _LP_OSC                           00003FF8
 _LVP_OFF                          00002FFF
 _LVP_ON                           00003FFF
-MPASM 5.63  /HOME/BEN/DOCUMENTS/EMBEDDED-SYS   11-5-2015  20:08:24         PAGE 14
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 _MCLRE_OFF                        00003FDF
 _MCLRE_ON                         00003FFF
 _PWRTE_OFF                        00003FFF
@@ -749,23 +795,25 @@ __16F887                          00000001
 led_state                         PORTD
 middle_counter                    0x22
 outer_counter                     0x21
+period                            0x20
 ss_counter                        0x24
 timeout_counter                   0x23
 
 
 MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
 
-0000 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX ----------------
+0000 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0040 : XXXXXXXXX------- ---------------- ---------------- ----------------
 2000 : -------XX------- ---------------- ---------------- ----------------
 
 All other memory blocks unused.
 
-Program Memory Words Used:    48
-Program Memory Words Free:  8144
+Program Memory Words Used:    73
+Program Memory Words Free:  8119
 
 
 Errors   :     0
-Warnings :     0 reported,     0 suppressed
-Messages :     3 reported,     0 suppressed
+Warnings :     1 reported,     0 suppressed
+Messages :     6 reported,     0 suppressed
 
 

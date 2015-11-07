@@ -1,3 +1,7 @@
-Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-7/Catch-the-Clown/catch-the-clown.asm 49 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-7/Catch-the-Clown/catch-the-clown.asm 50 : Register in operand not in bank 0.  Ensure that bank bits are correct.
 Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-7/Catch-the-Clown/catch-the-clown.asm 52 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-7/Catch-the-Clown/catch-the-clown.asm 53 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-7/Catch-the-Clown/catch-the-clown.asm 54 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-7/Catch-the-Clown/catch-the-clown.asm 56 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-7/Catch-the-Clown/catch-the-clown.asm 58 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Warning[208] /home/ben/Documents/Embedded-Systems-Design/Lab-7/Catch-the-Clown/catch-the-clown.asm 61 : Label truncated at 32 characters. (Initialize_Analog_to_Digital_Converter)
+Message[302] /home/ben/Documents/Embedded-Systems-Design/Lab-7/Catch-the-Clown/catch-the-clown.asm 64 : Register in operand not in bank 0.  Ensure that bank bits are correct.
