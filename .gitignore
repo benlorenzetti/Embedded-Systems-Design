@@ -4,5 +4,6 @@
 *.out
 *.toc
 *.gz
+*.fil
 /Lab-5/mplab-stuff/debug-lab-5.X/nbproject/private/
 /Lab-5/mplab-stuff/debug-lab-5.X/build/default/

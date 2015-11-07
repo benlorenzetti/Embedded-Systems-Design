@@ -179,6 +179,23 @@ T_{\textrm{sampling}}=14\,\mu s
 
 \subsection{Part 2: Catch the Clown Game}
 
+My implementation of the 4 requirements listed in
+\hyperref[part-2-problem-specs]{section \ref{part-2-problem-specs}}
+is shown in
+\hyperref[catch-the-clown-flowchart]{figure \ref{catch-the-clown-flowchart}}.
+It uses the \texttt{Monitor\_SW1()} function developed earlier
+(\hyperref[monitor-sw1-function-implementation]{figure \ref{monitor-sw1-function-implementation}})
+and the ADC logic from Lab 6. The implementation code is included in
+\hyperref[part-2-code]{section \ref{part-2-code}}.
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.5\textwidth]{Figures/catch-the-clown-flowchart.pdf}
+	\caption{Catch the Clown Implementation Flowchart}
+	\label{catch-the-clown-flowchart}
+\end{figure}
+
+\clearpage
 \section{Expected Results}
 
 \subsection{Debounce Time}
@@ -189,7 +206,7 @@ shows the timescale at which some random switch bounces.
 Based on this plot, the expected bouncing time of \texttt{SW1}
 was on the order of $500\, \mu s$.
 
-\begin{figure}
+\begin{figure}[h!]
 	\centering
 	\includegraphics[width=0.65\textwidth]{Figures/debounce-handout-time-graph.pdf}
 	\caption{A Bouncing Input Signal from a Switch}
@@ -210,6 +227,7 @@ $ /opt/microchip/mplabx/v3.10/mpasmx/mpasmx -p16f887 catch-the-clown.asm
 $ more catch-the-clown.ERR
 \end{verbatim}
 
+\clearpage
 \subsection{PORTB Input}
 
 On the 44--pin demo board, the pushbutton is connected to \texttt{RB0}
@@ -236,15 +254,13 @@ With this nugget, the working `pushbutton hello world' program was:
 \subsection{Adjusting Debounce Time}
 
 The results from part 1 of the lab are presented in
-hyperref[part-1-results-section]{section \ref{part-1-results-section}}.
+\hyperref[part-1-results-section]{section \ref{part-1-results-section}}.
 From these results, the \texttt{DEBOUNCE\_TIME} for the part 2 implementation
-was adjusted to XXX to require a steady state, debouncing period of
-\begin{equation*}
-T=X*14\, \mu s=XXX
-\end{equation*}
-before a switch activation is accepted by the program.
+was set to 8 to successfully debounce more than 99.999\% of switching events.
 
 \section{Observations}
+\subsection{Experimental Results for Duration of Switch Bouncing}
+\label{part-1-results-section}
 
 Using the part 1 implementation shown in
 \hyperref[monitor-sw1-function-implementation]{figure \ref{monitor-sw1-function-implementation}},
@@ -264,17 +280,20 @@ all bouncing with lifetimes up to $T_{\textrm{steady state}}=3.5\,ms$.
 With this filter period and 30 trials, the probability of
 detecting more than 1 activation edge per button press was zero.
 
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{Figures/debounce-time-results.pdf}
+	\caption{Experimental Debounce Time Results ($n=30$ trials)}
+	\label{debounce-time-results}
+\end{figure}
+
 This procedure was repeated with decreasing values for \texttt{DEBOUNCE\_TIME}
 until any trial detected more than 1 activation event per button press.
 This did not happen until \texttt{DEBOUNCE\_TIME} = 1.
-
-The results using a debouncing filter period of
-\begin{equation*}
-T_{\textrm{steady state}}=\textrm{\texttt{1}}*14\,\mu s
-\end{equation*}
+The results for this debouncing filter period
 are shown in \hyperref[debounce-time-results]{figure \ref{debounce-time-results}}.
-Assuming that the trials are a bernoulli process, the data was
-analyzed with a standard normal distribution, with average number of bounces
+Assuming that each trials is a bernoulli process, the data was
+analyzed with a standard normal distribution, with average bouncing lifetime of
 \begin{equation*}
 \mu=1.172T_{\textrm{steady state}}=16.41\,\mu s
 \end{equation*}
@@ -294,24 +313,16 @@ P(X>8T)	&=	&1-P(X<8T)	\\
 \end{array}
 \end{equation*}
 I could not find any tables for a Z score of 12.88, but from the highest
-value I did find, the probability a bounce passing through this filter
-period is certainly less than
-\begin{equation*}
+value I did find, the probability of bouncing occuring longer than this filter
+period is less than
+\begin{equation}
 P(X>8T)<0.001\%
-\end{equation*}
-
-
-\begin{figure}
-	\centering
-	\includegraphics[width=0.7\textwidth]{Figures/debounce-time-results.pdf}
-	\caption{Experimental Debounce Time Results from the Part 1 Implementation}
-	\label{debounce-time-results}
-\end{figure}
-
-\subsection{44--Pin Demo Board \texttt{SW1} Bouncing Time}
-\label{part-1-results-section}
+\end{equation}
 
 \section{Discussion}
+
+My catch the clown game was very successful at meeting the specifications.
+It was slightly less successful at being fun. Also, my reaction time is poor.
 
 \clearpage
 
@@ -323,7 +334,7 @@ P(X>8T)<0.001\%
 
 \clearpage
 \subsection{Catch the Clown!}
-\label{catch-the-clown-code}
+\label{part-2-code}
 \lstinputlisting[breaklines, basicstyle=\small]{Catch-the-Clown/catch-the-clown.asm}
 
 \end{document}
