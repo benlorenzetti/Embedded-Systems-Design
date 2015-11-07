@@ -35,10 +35,10 @@
 
 \section{Objectives and Problem Description}
 
-\subsection{Does the Switch Bounce?}
+\subsection{Part 1: Does the Switch Bounce?}
 \label{switch-debounce-problem-specs}
 
-\subsection{Catch the Clown!}
+\subsection{Part 2: Catch the Clown!}
 \label{catch-the-clown-problem-specs}
 
 Build a game for testing reaction times with an 8 LED rotating display,
@@ -61,32 +61,76 @@ part 1.
 
 \section{Procedure}
 
-\subsection{Switch Bounce}
+\subsection{Switch Bounce Background}
+
+Mechanical switches do not always produce clean, step function electrical signals.
+Instead, when a switch is thrown, the electric signal often `bounces' several times
+before settling at the active level. This is caused by electric arcing and breaking
+as the contacts near one other and from mechanical vibrations of contacts from the
+throwing force.
+
+Bouncing can cause problems if the device's function depends on the number of times
+a switch is thrown. For example, if you keyboard bounced, you would find yourself
+typing repeat letters and unpredictable backspacing. Traditionally switches were
+`debounced' with low pass filters in hardware, but with fast microcontrollers
+debouncing can be done in software to reduce hardware costs.
+\hyperref[io-circuit-diagram]{Figure \ref{io-circuit-diagram}} shows how PIC did this
+with their PIC16F887 44--pin demo board.
 
 \begin{figure}
 \centering
 	\begin{subfigure}[b]{.4\textwidth}
 		\centering
+		\includegraphics[width=\textwidth]{Figures/demo-board-pushbutton-circuit.pdf}
+		\caption[]%
+		{{PIC16F887 Demo Board Schematic: \emph{pushbutton SW1 is unfiltered and requires software debouncing.}}}
+	\end{subfigure}
+	\quad
+	\begin{subfigure}[b]{0.5\textwidth}
+		\centering
 		\includegraphics[width=\textwidth]{Figures/filtered-pushbutton-circuit.pdf}
 		\caption[]%
 		{{\small A Hardware Debounced Pushbutton: \emph{\mbox{$R_{3}$ and $C$} form a low pass filter.}}}
-	\end{subfigure}
-	\quad
-	\begin{subfigure}[b]{0.4\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{Figures/demo-board-pot-pushbutton-circuit.pdf}
-		\caption[]%
-		{{PIC16F887 Demo Board Schematic: \emph{pushbutton SW1 is unfiltered and requires software debouncing.}}}
 	\end{subfigure}	
 	\caption{Hardware vs Software Debouncing for Mechanical Switches}
 	\label{io-circuit-diagram}
 \end{figure}
 
+\subsection{Part 1: Debouncing \texttt{SW1}}
+
+\subsection{Part 2: Catch the Clown Game}
+
 \section{Expected Results}
+
+\subsection{Debounce Time}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.65\textwidth]{Figures/debounce-handout-time-graph.pdf}
+	\caption{A Bouncing Input Signal from a Switch}
+	\label{debounce-handout-time-graph}
+\end{figure}
+
+From Professor Vemuri's lecture,
+\hyperref[debounce-handout-time-graph]{figure \ref{debounce-handout-time-graph}}
+shows the timescale at which some random switch bounces.
+Based on this plot, the expected bouncing time of \texttt{SW1}
+was on the order of $500\, \mu s$.
 
 \section{Experiment and Design Revisions}
 
-\pagebreak
+\subsection{Command Line Assembly}
+
+My \texttt{.asm} source files were assembled on the command line so
+please do this if they don't compile nicely in the IDE.
+On Ubuntu, with the default MPLAB installation location, 
+from the directory containting \texttt{catch-the-clown.asm}, the commands are:
+\begin{verbatim}
+$ cp /opt/microchip/mplabx/v3.10/mpasmx/p16f887.inc ./p16f887.inc
+$ /opt/microchip/mplabx/v3.10/mpasmx/mpasmx -p16f887 catch-the-clown.asm
+$ more catch-the-clown.ERR
+\end{verbatim}
+
 \subsection{PORTB Input}
 
 On the 44--pin demo board, the pushbutton is connected to \texttt{RB0}
@@ -110,20 +154,21 @@ Here is a nugget that was buried on page 49 of the PIC16F887 datasheet:
 With this nugget, the working `pushbutton hello world' program was:
 \lstinputlisting[backgroundcolor=\color{mygray}, basicstyle=\small]{Test-SW1/test-sw1.asm}
 
-\pagebreak
-\subsection{Command Line Assembly}
+\subsection{Adjusting Debounce Time}
 
-My \texttt{.asm} source files were assembled on the command line so
-please do this if they don't compile nicely in the IDE.
-On Ubuntu, with the default MPLAB installation location, 
-from the directory containting \texttt{catch-the-clown.asm}, the commands are:
-\begin{verbatim}
-$ cp /opt/microchip/mplabx/v3.10/mpasmx/p16f887.inc ./p16f887.inc
-$ /opt/microchip/mplabx/v3.10/mpasmx/mpasmx -p16f887 catch-the-clown.asm
-$ more catch-the-clown.ERR
-\end{verbatim}
+The results from part 1 of the lab are presented in
+hyperref[part-1-results-section]{section \ref{part-1-results-section}}.
+From these results, the \texttt{DEBOUNCE\_TIME} for the part 2 implementation
+was adjusted to XXX to require a steady state, debouncing period of
+\begin{equation*}
+T=X*14\, \mu s=XXX
+\end{equation*}
+before a switch activation is accepted by the program.
 
 \section{Observations}
+
+\subsection{44--Pin Demo Board \texttt{SW1} Bouncing Time}
+\label{part-1-results-section}
 
 \section{Discussion}
 
