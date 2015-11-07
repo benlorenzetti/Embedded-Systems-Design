@@ -12,6 +12,8 @@
 \usepackage{harmony}
 \usepackage{wasysym}
 \usepackage{color}
+\usepackage{tikz}
+\usetikzlibrary{shapes, snakes, arrows, automata, positioning}
 
 \definecolor{mygray}{rgb}{.9,.9,.9}
 \lstset{ %
@@ -69,14 +71,6 @@ before settling at the active level. This is caused by electric arcing and break
 as the contacts near one other and from mechanical vibrations of contacts from the
 throwing force.
 
-Bouncing can cause problems if the device's function depends on the number of times
-a switch is thrown. For example, if you keyboard bounced, you would find yourself
-typing repeat letters and unpredictable backspacing. Traditionally switches were
-`debounced' with low pass filters in hardware, but with fast microcontrollers
-debouncing can be done in software to reduce hardware costs.
-\hyperref[io-circuit-diagram]{Figure \ref{io-circuit-diagram}} shows how PIC did this
-with their PIC16F887 44--pin demo board.
-
 \begin{figure}
 \centering
 	\begin{subfigure}[b]{.4\textwidth}
@@ -96,7 +90,56 @@ with their PIC16F887 44--pin demo board.
 	\label{io-circuit-diagram}
 \end{figure}
 
+Bouncing can cause problems if the device's function depends on the number of times
+a switch is thrown. For example, if you keyboard bounced, you would find yourself
+typing repeat letters and unpredictable backspacing. Traditionally switches were
+`debounced' with low pass filters in hardware, but with fast microcontrollers
+debouncing can be done in software to reduce hardware costs.
+\hyperref[io-circuit-diagram]{Figure \ref{io-circuit-diagram}} shows how PIC did this
+with their PIC16F887 44--pin demo board.
+
 \subsection{Part 1: Debouncing \texttt{SW1}}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}[node distance = 2cm, font=\fontsize{8pt}{9pt}\selectfont]
+		\node[draw, align=center, ellipse] (monitor-sw1) at (0, 0) {\underline{Monitor \texttt{SW1} Function}\\\texttt{uint8\_t rising\_edge Monitor\_SW1 ();}};
+		\node[draw, rectangle, dashed] (rec++) at (-9, 0) {\texttt{rising\_edge\_counter++}};
+		\node[draw, dashed, align=left, rectangle split, rectangle split parts=2, above of=rec++] (init) {Initialize Global Data\nodepart{second}\texttt{\&rising\_edge\_counter = PORTD;}\\\texttt{rising\_edge\_counter = 0;}\\\texttt{ss\_counter = DEBOUNCE\_TIME;}};
+		\node[draw, dashed, ellipse, above of=init] (start) {Start};
+		\node[draw, diamond, dashed, below = 1cm of rec++, align=center] (edge-detected) {Rising Edge\\Detected?};
+		\node[draw, rectangle, below of=monitor-sw1] (set-timeout) {Set \texttt{timeout\_counter = 256}};
+		\node[draw, diamond, align=center] (sw1-active) at (0, -4) {\texttt{SW1}\\Active?};
+		\node[draw, rectangle, below = 1cm of sw1-active] (set-ssc) {Set \texttt{ss\_counter = DEBOUNCE\_TIME}};
+		\node[draw, rectangle, left = 0.5cm of set-ssc] (ssc--) {\texttt{ss\_counter--}};
+		\node[draw, diamond, align=center] (timeout) at (0, -8.5) {Function\\Timeout?};
+		\node[draw, rectangle, left = 3.5cm of timeout, align=center] (return-0) {\underline{Return 0}\\timeout, no edge event};
+		\node[draw, diamond, align=center] (steady-active) at (0, -12) {\texttt{SW1}\\Steady and\\Active?};
+		\node[draw, rectangle, left =3cm of steady-active, align=center] (return-1) {\underline{Return 1}\\rising edge, steady state};
+		\path [draw, -latex', dashed, thick] (start) -- (init);
+		\path [draw, -latex', dashed, thick] (init) -- (monitor-sw1);
+		\path [draw, -latex', dashed, thick] (rec++) -- (monitor-sw1);
+		\path [draw, -latex', dashed, thick] (edge-detected) -- node [anchor=west, align=left] {yes;\\\texttt{(W == 1)}} (rec++);
+		\path [draw, -latex', dashed, thick] (edge-detected) -- node [anchor=east] {no; \texttt{(!W)}} (monitor-sw1);
+		\path [draw, -latex', thick] (monitor-sw1) -- (set-timeout);
+		\path [draw, -latex', thick] (set-timeout) -- (sw1-active);
+		\path [draw, -latex', thick] (sw1-active) -- node [anchor=east] {yes} (ssc--);
+		\path [draw, -latex', thick] (sw1-active) -- node [anchor=west] {no} (set-ssc);
+		\path [draw, thick, dashed] (return-0) -- (-9, -8.5);		
+		\path [draw, -latex', thick, dashed] (-9, -12) -- (edge-detected);
+		\path [draw, thick, dashed] (return-1) -- (-9, -12);
+		\path [draw, -latex', thick] (ssc--) -- (timeout);
+		\path [draw, -latex', thick] (set-ssc) -- (timeout); 
+		\path [draw, -latex', thick] (timeout) -- node [anchor=south] {yes; \texttt{(!timeout\_counter)}} (return-0);
+		\path [draw, -latex', thick] (timeout) -- node [anchor=west, align=left] {no;\\\texttt{(timeout\_counter)}} (steady-active);
+		\path [draw, -latex', thick] (steady-active) -- node [anchor=south] {yes; \texttt{(!ss\_counter)}} (return-1);
+		\path [draw, thick] (steady-active) -- node [anchor=south] {no; \texttt{(ss\_counter)}} (4,-12);
+		\path [draw, thick] (4,-12) -- (4, -4);
+		\path [draw, -latex', thick] (4, -4) -- (sw1-active);
+	\end{tikzpicture}
+	\caption{Implementation of \texttt{rising\_edge Monitor\_SW1()} Function}
+	\label{monitor-sw1-function-implementation}
+\end{figure}
 
 \subsection{Part 2: Catch the Clown Game}
 
